@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class ProjectApp {
+    private static final String COMPANY_NAME = "POISED";
     private static Scanner input = new Scanner(System.in);
     private static final int PAGE_WIDTH = 70;
     private static final char BORDER_CHAR = '-', CORNER_CHAR = '+';
@@ -28,7 +29,7 @@ public class ProjectApp {
     };
 
     public static void main(String[] args) {
-        printLogo("POISED");
+        printLogo();
         Project project = newProject();
 
         Person contractor = newPerson("Contractor"),
@@ -206,8 +207,8 @@ public class ProjectApp {
     /**
      * Prints a logo at the start of the application. Cosmetic
      */
-    private static void printLogo(String companyName) {
-        String logoText = String.format("{ %s }", companyName),
+    private static void printLogo() {
+        String logoText = String.format("{ %s }", COMPANY_NAME),
                 headingText = "Project Management System";
         printBorder(BORDER_CHAR, CORNER_CHAR, logoText);
         printBorder(' ', ':', headingText);
