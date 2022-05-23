@@ -2,11 +2,14 @@
 This is a project completed as a requirement for the HyperionDev Software Engineering Bootcamp.
 
 # Installation:
-`git clone https://github.com/suli-g/capstone-project5 projectApp`
-`cd projectApp`
+In your terminal, run:
+  1. `git clone https://github.com/suli-g/capstone-project5 projectApp`
+  2. `cd projectApp`
 
 # Usage
-`java ProjectApp.class`
+In your terminal, run 
+  `java ProjectApp.class`
+
 You will be asked to enter details for your Project, Customer, Contractor, and Architect.
 
 Once done, you will be presented with a summary of the details entered.
