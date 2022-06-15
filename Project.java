@@ -12,7 +12,7 @@ public class Project extends Entity {
     private Person customer,
             contractor,
             architect;
-    private float cost,
+    private double cost,
             paid = 0;
 
     private boolean isFinalized = false;
@@ -28,7 +28,7 @@ public class Project extends Entity {
      * @param erfNumber
      * @param totalCost
      */
-    public Project(String projectName, String projectAddress, String projectType, int erfNumber, float totalCost) {
+    public Project(String projectName, String projectAddress, String projectType, int erfNumber, double totalCost) {
         super(projectName, projectAddress, projectType, erfNumber);
         cost = totalCost;
     }
@@ -87,7 +87,7 @@ public class Project extends Entity {
      * @param amount the amount paid in rands.
      * @return this project.
      */
-    public Project setPaid(float amount) {
+    public Project setPaid(double amount) {
         paid = amount;
         return this;
     }
@@ -116,14 +116,14 @@ public class Project extends Entity {
     /**
      * @return the amount paid.
      */
-    public float getPaid() {
+    public double getPaid() {
         return paid;
     }
 
     /**
      * @return the total cost of this project.
      */
-    public float getCost() {
+    public double getCost() {
         return cost;
     }
 

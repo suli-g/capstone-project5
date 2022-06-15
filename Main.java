@@ -38,7 +38,7 @@ public class Main {
                 customer = newPerson("Customer"),
                 architect = newPerson("Architect");
 
-        project.setPaid(queryFloat("How much money has already been paid?"))
+        project.setPaid(queryDouble("How much money has already been paid?"))
                 .setCustomer(customer)
                 .setArchitect(architect)
                 .setContractor(contractor);
@@ -58,7 +58,7 @@ public class Main {
                     break;
                 case "p":
                     project.setPaid(
-                            queryFloat("How much money has already been paid?"));
+                            queryDouble("How much money has already been paid?"));
                     break;
                 case "f":
                     hasOutstanding = project.markFinalized();
@@ -125,6 +125,7 @@ public class Main {
         Integer year = null,
                 month = null,
                 maxDay, dayOfMonth = null;
+        // Use while loops to keep asking the user until a valid value is entered.
         while (true) {
             year = queryInt("Year due");
             if (year < YearMonth.now().getYear()) {
@@ -163,7 +164,7 @@ public class Main {
         String projectAddress = query("Project Address").trim();
         String projectType = query("Buliding Type").trim();
         int erfNumber = queryInt("ERF Number");
-        float totalCost = queryFloat("Projected cost for project");
+        double totalCost = queryDouble("Projected cost for project");
         return new Project(projectName, projectAddress, projectType, erfNumber, totalCost);
     }
 
@@ -248,34 +249,38 @@ public class Main {
      * @return User response.
      */
     private static Integer queryInt(String question) {
-        try {
-            /*
-             * To do this with nextInt(), a nextLine() would be needed as well.
-             * (https://stackoverflow.com/a/7056782/2850190)
-             */
-            return Integer.parseInt(query(question));
-        } catch (NumberFormatException exception) {
-            System.out.println("Only numbers are allowed here.");
-            System.exit(1);
-            return null;
+        String response = "";
+        while (true) {
+            try {
+                /*
+                 * To do this with nextInt(), a nextLine() would be needed as well.
+                 * (https://stackoverflow.com/a/7056782/2850190)
+                 */
+                response = query(question);
+                return Integer.parseInt(response);
+            } catch (NumberFormatException exception) {
+                System.out.println("Expected Integer. Got " + response);
+            }
         }
     }
 
     /**
-     * Asks the user a question and converts the response to a float.
+     * Asks the user a question and converts the response to a double.
      * 
      * @param question The question to be asked.
      * @return User response.
      */
-    private static Float queryFloat(String question) {
+    private static Double queryDouble(String question) {
+        String response = "";
         try {
             /*
-             * To do this with nextFloat(), a nextLine() would be needed as well.
+             * To do this with nextDouble(), a nextLine() would be needed as well.
              * (https://stackoverflow.com/a/7056782/2850190)
              */
-            return Float.parseFloat(query(question));
+            response = query(question);
+            return Double.parseDouble(response);
         } catch (NumberFormatException exception) {
-            System.out.println("Only numbers are allowed here.");
+            System.out.println("Expected Double. Got " + response);
             System.exit(1);
             return null;
         }
