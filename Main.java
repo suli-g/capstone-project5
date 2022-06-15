@@ -1,11 +1,13 @@
+
 /**
  * An application used to create and modify projects.
  */
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-public class ProjectApp {
+public class Main {
     private static final String COMPANY_NAME = "POISED";
     private static Scanner input = new Scanner(System.in);
     private static final int PAGE_WIDTH = 70;
@@ -41,12 +43,15 @@ public class ProjectApp {
                 .setArchitect(architect)
                 .setContractor(contractor);
         setDueDate(project);
+        showMainMenu(project);
+        System.out.println("Goodbye!");
+    }
+
+    private static void showMainMenu(Project project) {
         boolean hasOutstanding = false;
-        // Use the label to break the loop even in a switch statement.
-        mainMenu: while (true) {
+        while (true) {
             printBorder(BORDER_CHAR, CORNER_CHAR, "");
             System.out.println(project);
-
             switch (menuSelection(projectMenu)) {
                 case "c":
                     setDueDate(project);
@@ -64,34 +69,37 @@ public class ProjectApp {
                         System.out.println("The project finalized on " + project.dateFinalized());
                     }
                 case "d":
-                    subMenu: while (true) {
-                        switch (menuSelection(modificationMenu)) {
-                            case "e":
-                                contractor.setEmailAddress(
-                                        query("New email address (leave blank to cancel):"));
-                                break;
-                            case "p":
-                                contractor.setPhoneNumber(
-                                        queryInt("New phone number (leave blank to cancel):"));
-                                break;
-                            case "b":
-                                break subMenu;
-                            case "q":
-                                break mainMenu;
-                            default:
-                                System.out.println("Incorrect option entered.");
-
-                        }
+                    // Fall through if user enters 'q' in submenu.
+                    if (showSubMenu(project.getContractor())) {
+                        break;
                     }
-                    break;
                 case "q":
-                    break mainMenu;
+                    break;
                 default:
                     System.out.println("Incorrect option entered.");
-
             }
         }
-        System.out.println("Goodbye!");
+    }
+
+    private static boolean showSubMenu(Person contractor) {
+        while (true) {
+            switch (menuSelection(modificationMenu)) {
+                case "e":
+                    contractor.setEmailAddress(
+                            query("New email address (leave blank to cancel):"));
+                    break;
+                case "p":
+                    contractor.setPhoneNumber(
+                            queryInt("New phone number (leave blank to cancel):"));
+                    break;
+                case "b":
+                    return true;
+                case "q":
+                    return false;
+                default:
+                    System.out.println("Incorrect option entered.");
+            }
+        }
     }
 
     /**
@@ -160,7 +168,7 @@ public class ProjectApp {
     }
 
     /**
-     * Queries the user for details and creates a new Person object.
+     * Queries the user for details and creates a new person.
      * 
      * @param position
      * @return
@@ -222,8 +230,14 @@ public class ProjectApp {
      * @return User response.
      */
     private static String query(String question) {
-        System.out.print(question + ": ");
-        String response = input.nextLine();
+        String response = "";
+        try {
+            System.out.print(question + ": ");
+            response = input.nextLine();
+        } catch (NoSuchElementException error) {
+            System.out.println("\nProgram aborted prematurely.");
+            System.exit(1);
+        }
         return response.trim();
     }
 
@@ -235,12 +249,11 @@ public class ProjectApp {
      */
     private static Integer queryInt(String question) {
         try {
-            System.out.print(question + ": ");
             /*
              * To do this with nextInt(), a nextLine() would be needed as well.
              * (https://stackoverflow.com/a/7056782/2850190)
              */
-            return Integer.parseInt(input.nextLine());
+            return Integer.parseInt(query(question));
         } catch (NumberFormatException exception) {
             System.out.println("Only numbers are allowed here.");
             System.exit(1);
@@ -256,12 +269,11 @@ public class ProjectApp {
      */
     private static Float queryFloat(String question) {
         try {
-            System.out.print(question + ": ");
             /*
              * To do this with nextFloat(), a nextLine() would be needed as well.
              * (https://stackoverflow.com/a/7056782/2850190)
              */
-            return Float.parseFloat(input.nextLine());
+            return Float.parseFloat(query(question));
         } catch (NumberFormatException exception) {
             System.out.println("Only numbers are allowed here.");
             System.exit(1);

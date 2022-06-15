@@ -3,40 +3,75 @@
  */
 public class Person extends Entity {
     private String lastName;
+
+    /**
+     * Person constructor.
+     * 
+     * @param firstName       the first name of this person.
+     * @param lastName        the last name of this person.
+     * @param physicalAddress the physical address of this person.
+     * @param emailAddress    the email address of this person.
+     * @param phoneNumber     the phone number of this person (leading zeros
+     *                        truncated).
+     */
     public Person(String firstName, String lastName, String physicalAddress, String emailAddress, int phoneNumber) {
-        super(firstName + ' ' + lastName, physicalAddress, emailAddress, phoneNumber);
+        super(firstName + ' ' + lastName, physicalAddress, emailAddress, phoneNumber); // store the full name of this
+                                                                                       // person as the entity name.
         this.lastName = lastName;
     }
 
+    /**
+     * @param emailAddress the new email address of this person.
+     * @return this person.
+     */
     public Person setEmailAddress(String emailAddress) {
         this.type = emailAddress;
         return this;
     }
 
+    /**
+     * @param phoneNumber the new phone number of this person.
+     * @return this person.
+     */
     public Person setPhoneNumber(int phoneNumber) {
         number = phoneNumber;
         return this;
     }
 
+    /**
+     * @return this person's address.
+     */
     public String getAddress() {
         return this.address;
     }
+
+    /**
+     * @return this person's emailAddress.
+     */
     public String getEmailAddress() {
-        // Return type since is the only field in the parent class which was not useful here.
+        // Return type since is the only field in the parent class which was not used.
         return this.type;
     }
 
+    /**
+     * @return this person's number with a leading 0.
+     */
     public String getPhoneNumber() {
-        /*  Add the missing first digit since all starting zeroes would 
-            have been removed in the setter. 
-        */
+        // Add the missing first digit since all starting zeroes would have been removed
+        // in the setter.
         return "0" + this.number;
     }
 
+    /**
+     * @return this person's lastName.
+     */
     public String getLastName() {
         return lastName;
     }
 
+    /**
+     * @return this person's full name.
+     */
     public String getName() {
         return name;
     }

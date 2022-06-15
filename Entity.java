@@ -2,17 +2,19 @@
  * Represents an Entity
  */
 
-public abstract class Entity {
+abstract class Entity {
     protected String name;
     protected String address;
     protected String type;
     protected int number;
+
     /**
+     * Entity Constructor.
      * 
-     * @param name The name of this entity
+     * @param name    The name of this entity
      * @param address The physical address of this entity
-     * @param type The type of this entity
-     * @param number The number of this entity
+     * @param type    The type of this entity
+     * @param number  The number of this entity
      */
     public Entity(String name, String address, String type, int number) {
         this.name = name;
@@ -21,18 +23,30 @@ public abstract class Entity {
         this.number = number;
     }
 
+    /**
+     * @return The name of this entity.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return The address of this entity.
+     */
     public String getAddress() {
         return address;
     }
 
+    /**
+     * @return The type of this entity.
+     */
     public String getType() {
         return type;
     }
 
+    /**
+     * @return The number of this entity.
+     */
     public int getNumber() {
         return number;
     }
