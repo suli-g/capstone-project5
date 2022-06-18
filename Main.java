@@ -4,7 +4,6 @@
  */
 import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import Entities.Person;
@@ -34,14 +33,15 @@ public class Main {
     };
 
     public static void main(String[] args) {
+        Prompter.getInstance();
         printLogo();
         Project project = newProject();
 
         Person contractor = newPerson("Contractor"),
                 customer = newPerson("Customer"),
                 architect = newPerson("Architect");
-
-        project.setPaid(queryDouble("How much money has already been paid?"))
+        Prompter.expect("Total amount paid");
+        project.setPaid(Prompter.getDouble())
                 .setCustomer(customer)
                 .setArchitect(architect)
                 .setContractor(contractor);
@@ -50,7 +50,7 @@ public class Main {
         System.out.println("Goodbye!");
     }
 
-    private static void showMainMenu(Project project) {
+    private static void showMainMenu(Project project) throws IllegalArgumentException {
         boolean hasOutstanding = false;
         while (true) {
             printBorder(BORDER_CHAR, CORNER_CHAR, "");
@@ -60,8 +60,8 @@ public class Main {
                     setDueDate(project);
                     break;
                 case "p":
-                    project.setPaid(
-                            queryDouble("How much money has already been paid?"));
+                    Prompter.expect("Total money paid");
+                    project.setPaid(Prompter.getDouble());
                     break;
                 case "f":
                     hasOutstanding = project.markFinalized();
@@ -84,16 +84,16 @@ public class Main {
         }
     }
 
-    private static boolean showSubMenu(Person contractor) {
+    private static boolean showSubMenu(Person contractor) throws IllegalArgumentException {
         while (true) {
             switch (menuSelection(modificationMenu)) {
                 case "e":
-                    contractor.setEmailAddress(
-                            query("New email address (leave blank to cancel):"));
+                    Prompter.prompt("New email address");
+                    contractor.setEmailAddress(Prompter.getString());
                     break;
                 case "p":
-                    contractor.setPhoneNumber(
-                            queryInt("New phone number (leave blank to cancel):"));
+                    Prompter.prompt("New phone number");
+                    contractor.setPhoneNumber(Prompter.getInt());
                     break;
                 case "b":
                     return true;
@@ -115,7 +115,8 @@ public class Main {
         for (String option : menu) {
             System.out.println(option);
         }
-        return query("");
+        Prompter.expect("");
+        return Prompter.getString();
     }
 
     /**
@@ -130,7 +131,8 @@ public class Main {
                 maxDay, dayOfMonth = null;
         // Use while loops to keep asking the user until a valid value is entered.
         while (true) {
-            year = queryInt("Year due");
+            Prompter.expect("Year due");
+            year = Prompter.getInt();
             if (year < YearMonth.now().getYear()) {
                 System.out.printf("The year %d has expired. Pick a later year.", year);
             } else {
@@ -138,7 +140,8 @@ public class Main {
             }
         }
         while (true) {
-            month = queryInt("Month due (1 - 12)");
+            Prompter.expect("Month due (1 - 12)");
+            month = Prompter.getInt();
             if (month < 1 || month > 12) {
                 System.out.println("Pick a number between 1 and 12");
             } else {
@@ -147,7 +150,8 @@ public class Main {
         }
         maxDay = YearMonth.of(year, month).lengthOfMonth();
         while (true) {
-            dayOfMonth = queryInt("Day of month due (1 - " + maxDay + ")");
+            Prompter.prompt("Day of month due (1 - " + maxDay + ")");
+            dayOfMonth = Prompter.getInt();
             if (dayOfMonth < 1 || dayOfMonth > maxDay) {
                 System.out.println("Pick a number between 1 and " + maxDay);
             } else {
@@ -163,11 +167,16 @@ public class Main {
      * @return The project created.
      */
     private static Project newProject() {
-        String projectName = query("Project Name (Press 'Enter' to skip)").trim();
-        String projectAddress = query("Project Address").trim();
-        String projectType = query("Buliding Type").trim();
-        int erfNumber = queryInt("ERF Number");
-        double totalCost = queryDouble("Projected cost for project");
+        Prompter.prompt("Project Name");
+        String projectName = Prompter.getString();
+        Prompter.expect("Project Address");
+        String projectAddress = Prompter.getString();
+        Prompter.expect("Buliding Type");
+        String projectType = Prompter.getString();
+        Prompter.expect("ERF Number");
+        int erfNumber = Prompter.getInt(); 
+        Prompter.expect("Projected cost for project");
+        double totalCost = Prompter.getDouble();
         return new Project(projectName, projectAddress, projectType, erfNumber, totalCost);
     }
 
@@ -179,14 +188,19 @@ public class Main {
      */
     private static Person newPerson(String position) {
         System.out.println("Setting details for " + position + ":");
-        String firstName = query("First name");
-        String lastName = query("Last name");
-        String physicalAddress = query("Physical address");
-        String emailAddress = query("Email address");
+        Prompter.expect("First name");
+        String firstName = Prompter.getString();
+        Prompter.expect("Last name");
+        String lastName = Prompter.getString();
+        Prompter.expect("Physical address");
+        String physicalAddress = Prompter.getString();
+        Prompter.expect("Email address");
+        String emailAddress = Prompter.getString();
         Integer phoneNumber = null;
         while (true) {
-            phoneNumber = queryInt("Phone number");
-            if (phoneNumber >= 1000_000_000 || phoneNumber <= 99_999_999) {
+            Prompter.expect("Phone number");
+            phoneNumber = Prompter.getInt();
+            if (phoneNumber <= 99_999_999 || phoneNumber >= 1000_000_000) {
                 System.out.println("Phone number should have 10 digits!");
             } else {
                 break;
@@ -225,67 +239,5 @@ public class Main {
         printBorder(BORDER_CHAR, CORNER_CHAR, logoText);
         printBorder(' ', ':', headingText);
         printBorder(BORDER_CHAR, CORNER_CHAR, "");
-    }
-
-    /**
-     * Asks the user a question and returns the response.
-     * 
-     * @param question The question to be asked.
-     * @return User response.
-     */
-    private static String query(String question) {
-        String response = "";
-        try {
-            System.out.print(question + ": ");
-            response = input.nextLine();
-        } catch (NoSuchElementException error) {
-            System.out.println("\nProgram aborted prematurely.");
-            System.exit(1);
-        }
-        return response.trim();
-    }
-
-    /**
-     * Asks the user a question and converts the response to an integer.
-     * 
-     * @param question The question to be asked.
-     * @return User response.
-     */
-    private static Integer queryInt(String question) {
-        String response = "";
-        while (true) {
-            try {
-                /*
-                 * To do this with nextInt(), a nextLine() would be needed as well.
-                 * (https://stackoverflow.com/a/7056782/2850190)
-                 */
-                response = query(question);
-                return Integer.parseInt(response);
-            } catch (NumberFormatException exception) {
-                System.out.println("Expected Integer. Got " + response);
-            }
-        }
-    }
-
-    /**
-     * Asks the user a question and converts the response to a double.
-     * 
-     * @param question The question to be asked.
-     * @return User response.
-     */
-    private static Double queryDouble(String question) {
-        String response = "";
-        try {
-            /*
-             * To do this with nextDouble(), a nextLine() would be needed as well.
-             * (https://stackoverflow.com/a/7056782/2850190)
-             */
-            response = query(question);
-            return Double.parseDouble(response);
-        } catch (NumberFormatException exception) {
-            System.out.println("Expected Double. Got " + response);
-            System.exit(1);
-            return null;
-        }
     }
 }
