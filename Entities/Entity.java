@@ -1,3 +1,4 @@
+package Entities;
 /**
  * Represents an Entity
  */

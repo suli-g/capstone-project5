@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import Entities.Person;
+import Entities.Project;
+
 public class Main {
     private static final String COMPANY_NAME = "POISED";
     private static Scanner input = new Scanner(System.in);
