@@ -2,9 +2,13 @@
 /**
  * An application used to create and modify projects.
  */
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import Components.Menu;
 import Components.Prompter;
 import Entities.Person;
 import Entities.Project;
@@ -13,23 +17,24 @@ public class Main {
     private static final String COMPANY_NAME = "POISED";
     private static final int PAGE_WIDTH = 70;
     private static final char BORDER_CHAR = '-', CORNER_CHAR = '+';
-    private static ArrayList<String> projectMenu = new ArrayList<String>();
-    static {
-        projectMenu.add("[c]: Change due date");
-        projectMenu.add("[p]: Change amount paid");
-        projectMenu.add("[d]: Change a contractor's details");
-        projectMenu.add("[f]: Finalize the project");
-        projectMenu.add("[q]: Quit application");
-    };
 
-    private static ArrayList<String> modificationMenu = new ArrayList<String>() {
-        {
-            add("[e]: Change Email Address");
-            add("[p]: Change Phone Number");
-            add("[b]: Back to main Menu");
-            add("[q]: Quit Application");
-        }
-    };
+    private static final HashMap<String, String> PROJECT_OPTIONS = new HashMap<>(){{
+        put("c", "Change due date");
+        put("p", "Change amount paid");
+        put("d", "Change a contractor's details");
+        put("f", "Finalize the project");
+        put("q", "Quit application");
+    }};
+
+    private static final HashMap<String, String> PERSONNEL_OPTIONS = new HashMap<>(){{
+        put("e", "Change Email Address");
+        put("p", "Change Phone Number");
+        put("b", "Back to main Menu");
+        put("q", "Quit Application");
+    }};
+
+    private static final Menu PERSONNEL_MENU = new Menu("Personnel", PERSONNEL_OPTIONS);
+    private static final Menu PROJECT_MENU = new Menu("Main", PROJECT_OPTIONS);
 
     public static void main(String[] args) {
         Prompter.getInstance();
@@ -54,7 +59,9 @@ public class Main {
         while (true) {
             printBorder(BORDER_CHAR, CORNER_CHAR, "");
             System.out.println(project);
-            switch (menuSelection(projectMenu)) {
+            System.out.println(PROJECT_MENU);
+            Prompter.expect("");
+            switch (Prompter.getString()) {
                 case "c":
                     setDueDate(project);
                     break;
@@ -76,7 +83,7 @@ public class Main {
                         break;
                     }
                 case "q":
-                    break;
+                    return;
                 default:
                     System.out.println("Incorrect option entered.");
             }
@@ -85,7 +92,9 @@ public class Main {
 
     private static boolean showSubMenu(Person contractor) throws IllegalArgumentException {
         while (true) {
-            switch (menuSelection(modificationMenu)) {
+            System.out.println(PERSONNEL_MENU);
+            Prompter.expect("");
+            switch (Prompter.getString()) {
                 case "e":
                     Prompter.prompt("New email address");
                     contractor.setEmailAddress(Prompter.getString());
@@ -105,59 +114,24 @@ public class Main {
     }
 
     /**
-     * Prints all options in a menu and lets the user select an option.
-     * 
-     * @param menu The menu arraylist to iterate over.
-     * @return A query (see {@link #query(String)} )
-     */
-    private static String menuSelection(ArrayList<String> menu) {
-        for (String option : menu) {
-            System.out.println(option);
-        }
-        Prompter.expect("");
-        return Prompter.getString();
-    }
-
-    /**
      * Safely sets the due date for a Project.
      * 
      * @param project
      */
     private static void setDueDate(Project project) {
         System.out.println("Setting due date");
-        Integer year = null,
-                month = null,
-                maxDay, dayOfMonth = null;
-        // Use while loops to keep asking the user until a valid value is entered.
-        while (true) {
-            Prompter.expect("Year due");
-            year = Prompter.getInt();
-            if (year < YearMonth.now().getYear()) {
-                System.out.printf("The year %d has expired. Pick a later year.", year);
-            } else {
-                break;
+        boolean incorrectDateFormat = true;
+        LocalDate dateGiven = null;
+        while(incorrectDateFormat) {
+            try {
+                Prompter.expect("Due date (yyyy-mm-dd)");
+                dateGiven = LocalDate.parse(Prompter.getString());
+                incorrectDateFormat = false;
+            } catch(DateTimeParseException error) {
+                System.out.println("Incorrect date format.");
             }
         }
-        while (true) {
-            Prompter.expect("Month due (1 - 12)");
-            month = Prompter.getInt();
-            if (month < 1 || month > 12) {
-                System.out.println("Pick a number between 1 and 12");
-            } else {
-                break;
-            }
-        }
-        maxDay = YearMonth.of(year, month).lengthOfMonth();
-        while (true) {
-            Prompter.prompt("Day of month due (1 - " + maxDay + ")");
-            dayOfMonth = Prompter.getInt();
-            if (dayOfMonth < 1 || dayOfMonth > maxDay) {
-                System.out.println("Pick a number between 1 and " + maxDay);
-            } else {
-                break;
-            }
-        }
-        project.setDueDate(year, month, dayOfMonth);
+        project.setDueDate(dateGiven.getYear(), dateGiven.getMonthValue(), dateGiven.getDayOfMonth());
     }
 
     /**

@@ -1,3 +1,4 @@
+package Components;
 import java.util.Scanner;
 
 interface IPrompter {
@@ -22,12 +23,15 @@ public class Prompter implements IPrompter {
         response = INPUT.nextLine().trim();
     }
 
-    public static void expect(String information) throws IllegalArgumentException {
-        System.out.print(information + ": ");
-        if (INPUT.nextLine().length() == 0) {
-            throw new IllegalArgumentException("A response is expected here.");
+    public static void expect(String information) {
+        do {
+            System.out.print(information + ": ");
+            response = INPUT.nextLine().trim();
+            if (response == "") {
+                System.out.println("A response is expected here.");
+            }
         }
-        response = INPUT.nextLine().trim();
+        while (response == "");
     }
 
     public static String getString() {

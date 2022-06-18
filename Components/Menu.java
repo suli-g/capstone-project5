@@ -2,41 +2,23 @@ package Components;
 
 import java.util.HashMap;
 
-import Entities.Entity;
-
-interface MenuAction {
-    void run(Entity entity);
-}
-
 public class Menu {
-    private HashMap<String, MenuAction> options;
     private HashMap<String, String> descriptions;
-    public int length = 0;
+    private String name;
 
-    public Menu(HashMap<String, String> menuDescriptions) {
+    public Menu(String menuName, HashMap<String, String> menuDescriptions) {
+        name = menuName;
         descriptions = menuDescriptions;
     }
-
-    public void pick(String option, Entity entity) {
-        if (options.containsKey(option)) {
-            options.get(option).run(entity);
-        } else {
-            throw new IllegalArgumentException("The '" + option + "' option does not exist on this menu.");
-        }
-    }
-
-    public void setAction(String option, MenuAction action) {
-        options.put(option, action);
-        length++;
-    }
-
+    
     @Override
     public String toString() {
-        StringBuilder menuDescription = new StringBuilder("Option:      Description");
+        StringBuilder menuDescription = new StringBuilder(name)
+            .append(" Menu:\n")
+            .append("[Option] Description");
         descriptions.forEach((option, description) -> {
-            menuDescription.append(option).append(":\t\t").append(description).append('\n');
+            menuDescription.append('\n').append("[").append(option).append("]\t").append(description);
         });
-        menuDescription.deleteCharAt(length - 1);
         return menuDescription.toString();
     }
 }
