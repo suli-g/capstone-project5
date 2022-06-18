@@ -3,7 +3,7 @@ package Entities;
  * Represents an Entity
  */
 
-abstract class Entity {
+public abstract class Entity {
     protected String name;
     protected String address;
     protected String type;

@@ -4,14 +4,13 @@
  */
 import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.Scanner;
 
+import Components.Prompter;
 import Entities.Person;
 import Entities.Project;
 
 public class Main {
     private static final String COMPANY_NAME = "POISED";
-    private static Scanner input = new Scanner(System.in);
     private static final int PAGE_WIDTH = 70;
     private static final char BORDER_CHAR = '-', CORNER_CHAR = '+';
     private static ArrayList<String> projectMenu = new ArrayList<String>();
