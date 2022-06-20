@@ -1,32 +1,30 @@
-package Components;
+package Controller.Interactions;
 import java.util.Scanner;
 
 interface IPrompter {
     Scanner INPUT = new Scanner(System.in);
 }
 
-public class Prompter implements IPrompter {
-    private static Prompter prompterInstance;
+public class Input implements IPrompter {
+    private static Input prompterInstance;
     private static String response;
 
-    private Prompter(String lastResponse){
-        response = lastResponse;
-    }
+    private Input(){}
 
-    private static Prompter getInstance(String lastResponse) {
+    public static Input getInstance() {
         if (prompterInstance == null) {
-            prompterInstance = new Prompter(lastResponse);
+            prompterInstance = new Input();
         }
         return prompterInstance;
     }
 
-    public static Prompter query(String information) {
+    public static Input query(String information) {
         System.out.print(information + "(leave blank to skip): ");
         response = INPUT.nextLine().trim();
-        return getInstance(response);
+        return getInstance();
     }
 
-    public static Prompter expect(String information) {
+    public static Input expect(String information) {
         do {
             System.out.print(information + ": ");
             response = INPUT.nextLine().trim();
@@ -35,7 +33,7 @@ public class Prompter implements IPrompter {
             }
         }
         while (response == "");
-        return getInstance(response);
+        return getInstance();
     }
     
     public int toInteger() throws NumberFormatException, NullPointerException {

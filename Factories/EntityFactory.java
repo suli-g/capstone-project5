@@ -2,7 +2,7 @@ package Factories;
 
 import java.util.HashMap;
 
-import Components.Prompter;
+import Controller.Interactions.Input;
 import Entities.Person;
 import Entities.Project;
 
@@ -10,14 +10,14 @@ public class EntityFactory {
     private static HashMap<Integer, Project> projects = new HashMap<>();
     private static HashMap<Integer, Person> people = new HashMap<>();
     protected static Project newProject() {
-        int erfNumber = Prompter.expect("Project ERF Number").toInteger();
+        int erfNumber = Input.expect("Project ERF Number").toInteger();
         if (projects.containsKey(erfNumber)) {
             return projects.get(erfNumber);
         }
-        String projectName = Prompter.query("Project Name").toString();
-        String projectType = Prompter.expect("Project Type").toString();
-        String projectAddress = Prompter.expect("Project address").toString();
-        double projectCost = Prompter.expect("Project Cost").toDouble();
+        String projectName = Input.query("Project Name").toString();
+        String projectType = Input.expect("Project Type").toString();
+        String projectAddress = Input.expect("Project address").toString();
+        double projectCost = Input.expect("Project Cost").toDouble();
         Project project = new Project(projectName, projectAddress, projectType, erfNumber, projectCost);
         projects.put(erfNumber, project);
         return project;
@@ -25,14 +25,14 @@ public class EntityFactory {
 
     protected static Person newPerson(String position) {
         System.out.println("Setting details for " + position + ": ");
-        int phoneNumber = Prompter.expect("Phone number").toInteger();
+        int phoneNumber = Input.expect("Phone number").toInteger();
         if (people.containsKey(phoneNumber)) {
             return people.get(phoneNumber);
         }
-        String firstName = Prompter.expect("First name").toString(), 
-            lastName = Prompter.expect("Last name").toString(),
-            physicalAddress = Prompter.expect("Physical address").toString(),
-            emailAddress = Prompter.expect("Email address").toString();
+        String firstName = Input.expect("First name").toString(), 
+            lastName = Input.expect("Last name").toString(),
+            physicalAddress = Input.expect("Physical address").toString(),
+            emailAddress = Input.expect("Email address").toString();
         Person person = new Person(firstName, lastName, physicalAddress, emailAddress, phoneNumber);
         people.put(phoneNumber, person);
         return person;
