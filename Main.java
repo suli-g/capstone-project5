@@ -6,12 +6,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 
-import Builders.QueryBuilder;
 import Components.Menu;
+import Components.Prompter;
 import Entities.Person;
 import Entities.Project;
+import Factories.EntityFactory;
 
-public class Main {
+public class Main extends EntityFactory {
     private static final String COMPANY_NAME = "POISED";
     private static final int PAGE_WIDTH = 70;
     private static final char BORDER_CHAR = '-', CORNER_CHAR = '+';
@@ -34,6 +35,10 @@ public class Main {
     private static final Menu PERSONNEL_MENU = new Menu("Personnel", PERSONNEL_OPTIONS);
     private static final Menu PROJECT_MENU = new Menu("Main", PROJECT_OPTIONS);
 
+    public Main() {
+        super();
+    }
+
     public static void main(String[] args) {
         printLogo();
         Project project = newProject();
@@ -41,7 +46,8 @@ public class Main {
         Person contractor = newPerson("Contractor"),
                 customer = newPerson("Customer"),
                 architect = newPerson("Architect");
-        project.setPaid(QueryBuilder.expect("Total amount paid").toDouble())
+
+        project.setPaid(Prompter.expect("Total amount paid").toDouble())
                 .setCustomer(customer)
                 .setArchitect(architect)
                 .setContractor(contractor);
@@ -56,12 +62,12 @@ public class Main {
             printBorder(BORDER_CHAR, CORNER_CHAR, "");
             System.out.println(project);
             System.out.println(PROJECT_MENU);
-            switch (QueryBuilder.expect("").toString()) {
+            switch (Prompter.expect("").toString()) {
                 case "c":
                     setDueDate(project);
                     break;
                 case "p":
-                    project.setPaid(QueryBuilder.expect("Total money paid").toDouble());
+                    project.setPaid(Prompter.expect("Total money paid").toDouble());
                     break;
                 case "f":
                     hasOutstanding = project.markFinalized();
@@ -71,6 +77,7 @@ public class Main {
                         project.markFinalized();
                         System.out.println("The project finalized on " + project.dateFinalized());
                     }
+                    break;
                 case "d":
                     // Fall through if user enters 'q' in submenu.
                     if (showSubMenu(project.getContractor())) {
@@ -87,12 +94,12 @@ public class Main {
     private static boolean showSubMenu(Person contractor) throws IllegalArgumentException {
         while (true) {
             System.out.println(PERSONNEL_MENU);
-            switch (QueryBuilder.expect("").toString()) {
+            switch (Prompter.expect("").toString()) {
                 case "e":
-                    contractor.setEmailAddress(QueryBuilder.query("New email address").toString());
+                    contractor.setEmailAddress(Prompter.query("New email address").toString());
                     break;
                 case "p":
-                    contractor.setPhoneNumber(QueryBuilder.query("New phone number").toInteger());
+                    contractor.setPhoneNumber(Prompter.query("New phone number").toInteger());
                     break;
                 case "b":
                     return true;
@@ -115,51 +122,13 @@ public class Main {
         LocalDate dateGiven = null;
         while(incorrectDateFormat) {
             try {
-                dateGiven = LocalDate.parse(QueryBuilder.expect("Due date (yyyy-mm-dd)").toString());
+                dateGiven = LocalDate.parse(Prompter.expect("Due date (yyyy-mm-dd)").toString());
                 incorrectDateFormat = false;
             } catch(DateTimeParseException error) {
                 System.out.println("Incorrect date format.");
             }
         }
         project.setDueDate(dateGiven.getYear(), dateGiven.getMonthValue(), dateGiven.getDayOfMonth());
-    }
-
-    /**
-     * Queries the user for details and creates a new Project object.
-     * 
-     * @return The project created.
-     */
-    private static Project newProject() {
-        String projectName = QueryBuilder.query("Project Name").toString();
-        String projectAddress = QueryBuilder.expect("Project Address").toString();
-        String projectType = QueryBuilder.expect("Buliding Type").toString();
-        int erfNumber = QueryBuilder.expect("ERF Number").toInteger(); 
-        double totalCost = QueryBuilder.expect("Projected cost for project").toDouble();
-        return new Project(projectName, projectAddress, projectType, erfNumber, totalCost);
-    }
-
-    /**
-     * Queries the user for details and creates a new person.
-     * 
-     * @param position
-     * @return
-     */
-    private static Person newPerson(String position) {
-        System.out.println("Setting details for " + position + ":");
-        String firstName = QueryBuilder.expect("First name").toString();
-        String lastName = QueryBuilder.expect("Last name").toString();
-        String physicalAddress = QueryBuilder.expect("Physical address").toString();
-        String emailAddress = QueryBuilder.expect("Email address").toString();
-        Integer phoneNumber = null;
-        while (true) {
-            phoneNumber = QueryBuilder.expect("Phone number").toInteger();
-            if (phoneNumber <= 99_999_999 || phoneNumber >= 1000_000_000) {
-                System.out.println("Phone number should have 10 digits!");
-            } else {
-                break;
-            }
-        }
-        return new Person(firstName, lastName, physicalAddress, emailAddress, phoneNumber);
     }
 
     /**

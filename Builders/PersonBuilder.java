@@ -9,16 +9,8 @@ public class PersonBuilder {
     private String emailAddress;
     private int phoneNumber;
     public PersonBuilder(String firstName, String lastName) {
-        this.withNames(firstName, lastName);
-    }
-
-    public PersonBuilder() {
-    }
-
-    public PersonBuilder withNames(String firstName, String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
-        return this;
     }
 
     public PersonBuilder withPhoneNumber(int phoneNumber) {

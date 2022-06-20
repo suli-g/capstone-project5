@@ -8,17 +8,8 @@ public class ProjectBuilder {
     private String projectType;
     private int erfNumber;
     private double projectCost;
-    
-    public ProjectBuilder() {
-    }
-
-    public static ProjectBuilder startProject(String projectName) {
-        return new ProjectBuilder().withName(projectName);
-    }
-
-    public ProjectBuilder withName(String projectName) {
+    public ProjectBuilder(String projectName) {
         this.projectName = projectName;
-        return this;
     }
 
     public ProjectBuilder withAddress(String address) {

@@ -1,32 +1,32 @@
-package Builders;
+package Components;
 import java.util.Scanner;
 
 interface IPrompter {
     Scanner INPUT = new Scanner(System.in);
 }
 
-public class QueryBuilder implements IPrompter {
-    private static QueryBuilder prompterInstance;
+public class Prompter implements IPrompter {
+    private static Prompter prompterInstance;
     private static String response;
 
-    private QueryBuilder(String lastResponse){
+    private Prompter(String lastResponse){
         response = lastResponse;
     }
 
-    private static QueryBuilder getInstance(String lastResponse) {
+    private static Prompter getInstance(String lastResponse) {
         if (prompterInstance == null) {
-            prompterInstance = new QueryBuilder(lastResponse);
+            prompterInstance = new Prompter(lastResponse);
         }
         return prompterInstance;
     }
 
-    public static QueryBuilder query(String information) {
+    public static Prompter query(String information) {
         System.out.print(information + "(leave blank to skip): ");
         response = INPUT.nextLine().trim();
         return getInstance(response);
     }
 
-    public static QueryBuilder expect(String information) {
+    public static Prompter expect(String information) {
         do {
             System.out.print(information + ": ");
             response = INPUT.nextLine().trim();
