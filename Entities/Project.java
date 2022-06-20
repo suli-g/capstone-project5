@@ -27,11 +27,11 @@ public class Project extends Entity {
      * @param projectAddress
      * @param projectType
      * @param erfNumber
-     * @param totalCost
+     * @param projectCost
      */
-    public Project(String projectName, String projectAddress, String projectType, int erfNumber, double totalCost) {
+    public Project(String projectName, String projectAddress, String projectType, int erfNumber, double projectCost) {
         super(projectName, projectAddress, projectType, erfNumber);
-        cost = totalCost;
+        cost = projectCost;
     }
 
     /**
