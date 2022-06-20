@@ -4,19 +4,17 @@
  */
 import java.time.format.DateTimeParseException;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 
 import Components.Menu;
-import Controller.Controller;
-import Controller.Interactions.Input;
-import Controller.Interactions.Output;
 import Entities.Person;
 import Entities.Project;
+import IO.IOController;
+import IO.Input;
+import IO.Output;
 
-public class Main extends Controller {
-    private static final char NODE_CHAR = '+', EDGE_CHAR = '-';
+public class Main extends IOController {
     private static final String COMPANY_NAME = "POISED";
-    private static final int PAGE_WIDTH = 70;
-
     private static final HashMap<String, String> PROJECT_OPTIONS = new HashMap<>(){{
         put("c", "Change due date");
         put("p", "Change amount paid");
@@ -40,12 +38,12 @@ public class Main extends Controller {
     }
 
     public static void main(String[] args) {
-        printLogo();
+        Output.printHeader(COMPANY_NAME);
         Project project = newProject();
-
         Person contractor = newPerson("Contractor"),
                 customer = newPerson("Customer"),
                 architect = newPerson("Architect");
+
 
         project.setPaid(Input.expect("Total amount paid").toDouble())
                 .setCustomer(customer)
@@ -58,11 +56,17 @@ public class Main extends Controller {
 
     private static void showMainMenu(Project project) throws IllegalArgumentException {
         boolean hasOutstanding = false;
+        String selected;
         while (true) {
-            printLogo();
             System.out.println(project);
             System.out.println(PROJECT_MENU);
-            switch (Input.expect("").toString()) {
+            try {
+                selected = Input.expect("").toString();
+            } catch(IllegalStateException error) {
+                System.out.println(error);
+                continue;
+            }
+            switch (selected) {
                 case "c":
                     setProjectDueDate(project);
                     break;
@@ -75,11 +79,11 @@ public class Main extends Controller {
                         System.out.println(project.getInvoice());
                     } else {
                         project.markFinalized();
-                        System.out.println("The project finalized on " + project.dateFinalized());
+                        System.out.println("The project was finalized on " + project.dateFinalized());
                     }
                     break;
                 case "d":
-                    // Fall through if user enters 'q' in submenu.
+                    // Falls through if user enters 'q' in submenu.
                     if (showSubMenu(project.getContractor())) {
                         break;
                     }
@@ -92,9 +96,16 @@ public class Main extends Controller {
     }
 
     private static boolean showSubMenu(Person contractor) throws IllegalArgumentException {
+        String selected;
         while (true) {
+            try {
+                selected = Input.expect("").toString();
+            } catch(IllegalStateException error) {
+                System.out.println(error);
+                continue;
+            }
             System.out.println(PERSONNEL_MENU);
-            switch (Input.expect("").toString()) {
+            switch (selected) {
                 case "e":
                     contractor.setEmailAddress(Input.query("New email address").toString());
                     break;
@@ -129,22 +140,10 @@ public class Main extends Controller {
                 System.out.println("Incorrect format given. The date should contain only numbers.");
                 System.out.println("Example: 2021-11-12");
             } catch(IllegalArgumentException error) {
-                System.out.println(error.getLocalizedMessage());
+                System.out.println(error);
+            } catch(IllegalStateException error) {
+                System.out.println(error);
             }
         }
-    }
-
-    /**
-     * Prints a logo at the start of the application. Cosmetic
-     */
-    private static void printLogo() {
-        String logoText = String.format("+++++{ %s }+++++", COMPANY_NAME),
-                headingText = "[{ Project Management System }]",
-                horizontalLine = Output.drawHorizontalLine(EDGE_CHAR, PAGE_WIDTH);
-
-        System.out.println(horizontalLine);
-        System.out.println(Output.embedTextInLine(logoText, horizontalLine));
-        System.out.println(Output.embedTextInLine(headingText, horizontalLine));
-        System.out.println(horizontalLine);
     }
 }

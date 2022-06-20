@@ -1,4 +1,5 @@
 package Entities;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -166,11 +167,11 @@ public class Project extends Entity {
      */
     public String getInvoice() {
         String receipt = String.format("""
-            Total Cost:            R%.2f
-            Total Paid:            R%.2f
-            Outstanding Balance:   R%.2f
+                Total Cost:            R%.2f
+                Total Paid:            R%.2f
+                Outstanding Balance:   R%.2f
 
-            """, cost, paid, cost - paid);
+                """, cost, paid, cost - paid);
         return new StringBuilder()
                 .append("---Customer Details---\n")
                 .append(customer)
