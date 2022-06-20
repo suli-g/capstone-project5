@@ -1,15 +1,13 @@
 package Entities;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Represents a project
  */
 public class Project extends Entity {
     // The format to use for all project-related date strings.
-    private static final String DATE_FORMAT = "yyyy/MM/dd";
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT);
-
     private Person customer,
             contractor,
             architect;
@@ -17,7 +15,7 @@ public class Project extends Entity {
             paid = 0;
 
     private boolean isFinalized = false;
-    private String dueDate,
+    private LocalDate dueDate,
             dateFinalized;
 
     /**
@@ -42,10 +40,12 @@ public class Project extends Entity {
      * @param dayOfMonth the day of the month at which this project is due.
      * @return this project.
      */
-    public Project setDueDate(int year, int month, int dayOfMonth) {
+    public Project setDueDate(String date) throws DateTimeParseException {
         // First validate the details of the new date before assigning it.
-        LocalDate dateDue = LocalDate.of(year, month, dayOfMonth);
-        dueDate = DATE_FORMATTER.format(dateDue);
+        dueDate = LocalDate.parse(date);
+        if (dueDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("That date has already expired!");
+        }
         return this;
     }
 
@@ -132,14 +132,14 @@ public class Project extends Entity {
      * @return the due date of this project.
      */
     public String getDueDate() {
-        return dueDate;
+        return dueDate.toString();
     }
 
     /**
      * @return the date this project was finalized.
      */
     public String dateFinalized() {
-        return dateFinalized;
+        return dateFinalized.toString();
     }
 
     /**
@@ -149,7 +149,7 @@ public class Project extends Entity {
      */
     public boolean markFinalized() {
         isFinalized = true;
-        dateFinalized = DATE_FORMATTER.format(LocalDate.now());
+        dateFinalized = LocalDate.now();
         return cost != paid;
     }
 

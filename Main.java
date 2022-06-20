@@ -119,16 +119,19 @@ public class Main extends EntityFactory {
     private static void setDueDate(Project project) {
         System.out.println("Setting due date");
         boolean incorrectDateFormat = true;
-        LocalDate dateGiven = null;
+        String dueDate;
         while(incorrectDateFormat) {
             try {
-                dateGiven = LocalDate.parse(Prompter.expect("Due date (yyyy-mm-dd)").toString());
+                dueDate = Prompter.expect("Due date (yyyy-mm-dd)").toString();
+                project.setDueDate(dueDate);
                 incorrectDateFormat = false;
             } catch(DateTimeParseException error) {
-                System.out.println("Incorrect date format.");
+                System.out.println("Incorrect format given. The date should contain only numbers.");
+                System.out.println("Example: 2021-11-12");
+            } catch(IllegalArgumentException error) {
+                System.out.println(error.getLocalizedMessage());
             }
         }
-        project.setDueDate(dateGiven.getYear(), dateGiven.getMonthValue(), dateGiven.getDayOfMonth());
     }
 
     /**
