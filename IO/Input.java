@@ -2,18 +2,19 @@ package IO;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-interface Prompter {
-    Scanner SCANNER = new Scanner(System.in);
-}
-
 /**
  * Handles application input.
  */
-public class Input implements Prompter {
+public class Input {
     private static Input inputInstance;
     private static String response ="";
-    
+    private static Scanner source = new Scanner(System.in);
+
     private Input(){
+    }
+
+    public static void setSource(Scanner scanner) {
+        source = scanner;
     }
 
     /**
@@ -37,7 +38,7 @@ public class Input implements Prompter {
      */
     public static Input query(String information) throws NoSuchElementException {
         System.out.print(information + "(leave blank to skip): ");
-        response = SCANNER.nextLine().trim();
+        response = source.nextLine().trim();
         return getInstance();
     }
 
@@ -51,7 +52,7 @@ public class Input implements Prompter {
      */
     public static Input expect(String information) throws IllegalStateException, NoSuchElementException {
             System.out.print(information + ": ");
-            response = SCANNER.nextLine().trim();
+            response = source.nextLine().trim();
             if (response == "") {
                 throw new IllegalStateException("This information is required.");
             }
