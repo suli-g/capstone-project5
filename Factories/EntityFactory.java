@@ -11,7 +11,7 @@ import IO.Input;
  * Defines EntityFactory.
  */
 public class EntityFactory {
-    private static HashMap<Integer, Project> projects = new HashMap<>();
+    private static HashMap<String, Project> projects = new HashMap<>();
     private static HashMap<Integer, Person> people = new HashMap<>();
 
     /**
@@ -26,15 +26,15 @@ public class EntityFactory {
                 projectAddress;
         double projectCost;
         try {
-            erfNumber = Input.expect("Project ERF Number").toInteger();
-            if (projects.containsKey(erfNumber)) {
-                /*
-                 * Since ERF numbers are unique, if the erf matches
-                 * then return the project with that ERF.
-                 */
-                return projects.get(erfNumber);
-            }
             projectName = Input.query("Project Name").toString();
+            if (projects.containsKey(projectName)) {
+                /*
+                * Since project names ought to be unique, if the name matches
+                * then return the project with that name.
+                */
+                return projects.get(projectName);
+            }
+            erfNumber = Input.expect("Project ERF Number").toInteger();
             projectType = Input.expect("Project Type").toString();
             projectAddress = Input.expect("Project address").toString();
             projectCost = Input.expect("Project Cost").toDouble();
@@ -50,7 +50,7 @@ public class EntityFactory {
         }
 
         Project project = new Project(projectName, projectAddress, projectType, erfNumber, projectCost);
-        projects.put(erfNumber, project);
+        projects.put(projectName, project);
         return project;
     }
 
