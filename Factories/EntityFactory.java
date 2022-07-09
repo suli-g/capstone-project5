@@ -17,38 +17,9 @@ public class EntityFactory {
     /**
      * Prompts the user for project details, then creates and stores Project object.
      * 
-     * @return a Project
+     * @return the created project
      */
-    protected static Project newProject() {
-        int erfNumber;
-        String projectName,
-                projectType,
-                projectAddress;
-        double projectCost;
-        try {
-            projectName = Input.query("Project Name").toString();
-            if (projects.containsKey(projectName)) {
-                /*
-                * Since project names ought to be unique, if the name matches
-                * then return the project with that name.
-                */
-                return projects.get(projectName);
-            }
-            erfNumber = Input.expect("Project ERF Number").toInteger();
-            projectType = Input.expect("Project Type").toString();
-            projectAddress = Input.expect("Project address").toString();
-            projectCost = Input.expect("Project Cost").toDouble();
-        } catch (IllegalStateException error) {
-            // Just cancel the operation if a required field is skipped.
-            System.out.println(error);
-            return null;
-        } catch (NoSuchElementException error) {
-            // Just cancel the operation if a required field is skipped.
-            System.out.println("\nInput cancelled unexpectedly.");
-            System.exit(1);
-            return null;
-        }
-
+    public static Project addProject(String projectName, int erfNumber, String projectType, String projectAddress, double projectCost) {
         Project project = new Project(projectName, projectAddress, projectType, erfNumber, projectCost);
         projects.put(projectName, project);
         return project;
@@ -58,49 +29,19 @@ public class EntityFactory {
      * Prompts the user for a Person's details, then creates and stores
      * 
      * @param position
-     * @return
+     * @return the created person
      */
-    protected static Person newPerson(String position) {
-        System.out.println("Setting details for " + position + ": ");
-        String firstName,
-                lastName,
-                physicalAddress,
-                emailAddress;
-        int phoneNumber;
-        try {
-            phoneNumber = Input.expect("Phone number").toInteger();
-            /*
-             * Since phone numbers are unique, return a person if there is a
-             * phone number that matches.
-             */
-            if (people.containsKey(phoneNumber)) {
-                return people.get(phoneNumber);
-            }
-
-            firstName = Input.expect("First name").toString();
-            lastName = Input.expect("Last name").toString();
-            physicalAddress = Input.expect("Physical address").toString();
-            emailAddress = Input.expect("Email address").toString();
-        } catch (IllegalStateException error) {
-            // Just cancel the operation if a required field is skipped.
-            System.out.println(error);
-            return null;
-        } catch (NoSuchElementException error) {
-            // Just cancel the operation if a required field is skipped.
-            System.out.println("\nInput cancelled unexpectedly.");
-            System.exit(1);
-            return null;
-        }
+    public static Person addPerson(int phoneNumber, String firstName, String lastName, String physicalAddress, String emailAddress) {
         Person person = new Person(firstName, lastName, physicalAddress, emailAddress, phoneNumber);
         people.put(phoneNumber, person);
         return person;
     }
 
-    protected Person getPerson(int phoneNumber) {
+    public static Person getPerson(int phoneNumber) {
         return people.get(phoneNumber);
     }
 
-    protected Project getProject(int erfNumber) {
-        return projects.get(erfNumber);
+    public static Project getProject(String projectName) {
+        return projects.get(projectName);
     }
 }
