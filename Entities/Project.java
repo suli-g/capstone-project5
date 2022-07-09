@@ -182,9 +182,6 @@ public class Project extends Entity {
 
     @Override
     public String getName() {
-        if (name == "") {
-            return type + ' ' + customer.getLastName();
-        }
         return name;
     }
 
