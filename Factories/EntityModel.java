@@ -1,17 +1,23 @@
 package Factories;
 
 import java.io.IOException;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import Entities.Person;
 import Entities.Project;
 import IO.DataSource;
 
-public class EntityModel {
+interface DataSourceEntry {
+    String VALUE_DELIMITER = ";";
+}
+
+public class EntityModel implements DataSourceEntry {
     private static EntityModel encoderInstance;
     protected static DataSource people, projects;
-    private static String separator;
 
-    private EntityModel(DataSource projectSource, DataSource peopleSource, String delimiter) {
-        separator = delimiter;
+    private EntityModel(DataSource projectSource, DataSource peopleSource) {
         projects = projectSource;
         people = peopleSource;
     }
@@ -24,75 +30,145 @@ public class EntityModel {
         return projects;
     }
 
-    public static EntityModel getInstance(DataSource projectSource, DataSource peopleSource, String delimiter) {
+    public static EntityModel getInstance(DataSource projectSource, DataSource peopleSource) {
         if (encoderInstance == null) {
-            encoderInstance = new EntityModel(projectSource, peopleSource, delimiter);
+            encoderInstance = new EntityModel(projectSource, peopleSource);
         }
         return encoderInstance;
     }
 
-    private static String[] decode(String data) {
-        return data.split(separator);
+    public static Project loadProject(String data) throws NumberFormatException, IndexOutOfBoundsException {
+        try {
+            return ProjectEntry.asProject(data.split(VALUE_DELIMITER));
+        } catch (Exception error) {
+            System.out.println(error);
+            return null;
+        }
     }
 
-    public static Project getProject(String data) throws NumberFormatException {
-        String[] segments = decode(data);
-        String projectName = segments[0];
-        int erfNumber = Integer.parseInt(segments[1]);
-        String projectType = segments[2];
-        String projectAddress = segments[3];
-        double projectCost = Double.parseDouble(segments[4]);
-        return EntityFactory.addProject(projectName, erfNumber, projectType, projectAddress, projectCost);
+    public static void saveProjects(HashMap<String, Project> projectMap) throws IOException {
+        int entryAmount = projectMap.size();
+        if (entryAmount > 0) {
+            StringBuilder data = new StringBuilder();
+            int projectNumber = 0;
+            for (Project project : projectMap.values()) {
+                data.append(ProjectEntry.asString(projectNumber++, project))
+                        .append(System.lineSeparator());
+            }
+            projects.saveData(data.toString());
+        }
     }
 
-    public static Project addProject(String projectName, int erfNumber, String projectType, String projectAddress,
-            double projectCost) throws IOException {
-                Project project = EntityFactory.addProject(projectName, erfNumber, projectType, projectAddress, projectCost);
-        String projectData = new StringBuilder()
-                .append(projectName)
-                .append(separator)
-                .append(erfNumber)
-                .append(separator)
-                .append(projectType)
-                .append(separator)
-                .append(projectAddress)
-                .append(separator)
-                .append(projectCost)
-                .append("\n")
-                .toString();
-        projects.addLine(projectData);
-        System.out.println(projectData);
-        return project;
+    public static Person loadPerson(String data) throws NumberFormatException, IndexOutOfBoundsException {
+        if (data == null) {
+            return null;
+        }
+        return PersonEntry.asPerson(data.split(VALUE_DELIMITER));
     }
 
-    public static Person getPerson(String data) {
-        String[] segments = decode(data);
-        int phoneNumber = Integer.parseInt(segments[0]);
-        String firstName = segments[1];
-        String lastName = segments[2];
-        String physicalAddress = segments[3];
-        String emailAddress = segments[4];
-        return EntityFactory.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
+    public static void savePeople(HashMap<Integer, Person> peopleMap) throws IOException {
+        if (peopleMap.size() > 0) {
+            StringBuilder data = new StringBuilder();
+            for (Person person : peopleMap.values()) {
+                data.append(PersonEntry.asString(person))
+                        .append(System.lineSeparator());
+            }
+            data.deleteCharAt(data.length() - 1);
+            people.saveData(data.toString());
+        }
+    }
+}
+
+class DataEntry implements DataSourceEntry {
+    StringBuilder value;
+    private String[] headers;
+
+    public String[] getHeaders() {
+        return headers;
     }
 
-    public static Person addPerson(int phoneNumber, String firstName, String lastName, String physicalAddress,
-            String emailAddress) throws IOException {
-        Person person = EntityFactory.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
-        String personData = new StringBuilder()
-                .append(person.getPhoneNumber())
-                .append(separator)
-                .append(person.getName())
-                .append(separator)
+    public void setHeaders(String[] headers) {
+        this.headers = headers;
+    }
+
+    public DataEntry() {
+        value = new StringBuilder();
+    }
+
+    public DataEntry append(Object data) {
+        value.append(data).append(VALUE_DELIMITER);
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return value.toString();
+    }
+}
+
+class PersonEntry {
+    private static String[] headers = new String[] {
+            "first name", "last name", "physical address", "email address", "phone number"
+    };
+
+    public static String[] getHeaders() {
+        return headers;
+    }
+
+    public static String asString(Person person) {
+        return new DataEntry()
+                .append(person.getFirstName())
                 .append(person.getLastName())
-                .append(separator)
                 .append(person.getAddress())
-                .append(separator)
                 .append(person.getEmailAddress())
-                .append("\n")
+                .append(person.getNumber())
                 .toString();
-                System.out.println(personData);
-        people.addLine(personData);
-        return person;
     }
 
+    public static Person asPerson(String[] entry) throws NumberFormatException, IndexOutOfBoundsException {
+        return new Person(entry[0], entry[1], entry[2], entry[3], Integer.parseInt(entry[4]));
+    }
+}
+
+class ProjectEntry implements DataSourceEntry {
+    private static String[] headers = new String[] {
+            "number", "name", "physical address", "building type", "erf number", "cost", "paid", "finalization date",
+            "Customer", "Contractor", "Architect"
+    };
+
+    public static String[] getHeaders() {
+        return headers;
+    }
+
+    public static String asString(int projectNumber, Project project) {
+        String finalizationDate = project.getDateFinalized();
+        return new DataEntry()
+                .append(projectNumber)
+                .append(project.getName())
+                .append(project.getAddress())
+                .append(project.getType())
+                .append(project.getNumber())
+                .append(project.getCost())
+                .append(project.getPaid())
+                .append(finalizationDate == null ? "-" : finalizationDate)
+                .append(project.get("Customer").getNumber())
+                .append(project.get("Contractor").getNumber())
+                .append(project.get("Architect").getNumber())
+                .toString();
+    }
+
+    public static Project asProject(String[] entry) throws NumberFormatException, IndexOutOfBoundsException {
+        Project resultProject = new Project(entry[1], entry[2], entry[3], Integer.parseInt(entry[4]),
+                Double.parseDouble(entry[5]));
+        resultProject.setPaid(Double.parseDouble(entry[6]));
+        try {
+            resultProject.markFinalized(entry[7]);
+        } catch (Exception ignore) {
+            // No finalization date available.
+        }
+        resultProject.set("Customer", EntityFactory.getPerson(Integer.parseInt(entry[8])));
+        resultProject.set("Architect", EntityFactory.getPerson(Integer.parseInt(entry[9])));
+        resultProject.set("Contractor", EntityFactory.getPerson(Integer.parseInt(entry[10])));
+        return resultProject;
+    }
 }

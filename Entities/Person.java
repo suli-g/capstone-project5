@@ -3,7 +3,11 @@ package Entities;
  * Represents a person.
  */
 public class Person extends Entity {
-    private String lastName;
+    private String lastName, firstName;
+
+    public String getFirstName() {
+        return firstName;
+    }
 
     /**
      * Person constructor.
@@ -16,9 +20,9 @@ public class Person extends Entity {
      *                        truncated).
      */
     public Person(String firstName, String lastName, String physicalAddress, String emailAddress, int phoneNumber) {
-        super(firstName + ' ' + lastName, physicalAddress, emailAddress, phoneNumber); // store the full name of this
-                                                                                       // person as the entity name.
+        super(firstName, physicalAddress, emailAddress, phoneNumber); // store the full name of this                                                       // person as the entity name.
         this.lastName = lastName;
+        this.firstName = firstName;
     }
 
     /**
@@ -74,7 +78,7 @@ public class Person extends Entity {
      * @return this person's full name.
      */
     public String getName() {
-        return name;
+        return firstName + ' ' + lastName;
     }
 
     @Override

@@ -3,6 +3,7 @@ package IO;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 
@@ -11,15 +12,14 @@ public class DataSource {
     private Scanner scanner;
     private Path sourcePath;
     public DataSource(Path sourcePath) throws FileNotFoundException, IOException {
+        if (!Files.exists(sourcePath)) {
+            throw new FileNotFoundException("The source file: '" + sourcePath.toString() +"' does not exist.");
+        }
         this.sourcePath = sourcePath;
         scanner = new Scanner(sourcePath);
     }
     
-    public boolean hasNext() {
-        return scanner.hasNext();
-    }
-
-    public String getLine()  {
+    public String loadLine() {
         if (scanner.hasNext()) {
             return scanner.nextLine();
         } else {
@@ -27,10 +27,16 @@ public class DataSource {
         }
     }
 
-    public void addLine(String line) throws IOException {
-        FileWriter writer = new FileWriter(sourcePath.toFile(), true);
-        writer.append(line);
-        writer.close();
+    public boolean saveData(String data) {
+        try {
+            FileWriter writer = new FileWriter(sourcePath.toFile());
+            writer.write(data);
+            writer.close();
+            return true;
+        } catch(IOException error) {
+            System.out.println("Something went wrong while saving the data.");
+            return false;
+        }
     }
 
     @Override

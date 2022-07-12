@@ -4,13 +4,12 @@
  */
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.NoSuchElementException;
-
 import Components.Menu;
 import Entities.Person;
 import Entities.Project;
+import Enums.COMPLETION_STATUS;
 import Factories.DataSourceFactory;
 import Factories.EntityFactory;
 import Factories.EntityModel;
@@ -22,12 +21,12 @@ import IO.Output;
 public class Main extends IOController {
     private static final String COMPANY_NAME = "POISED",
             ENTITY_DATA_DIRECTORY = "entity-data",
-            ENTITY_DATA_DELIMITER = ", ",
             REUSE_PERSON_MESSAGE = "The information given matches some in the database. Use details for %s? (Y/n)";
     private static final Menu MAIN_MENU = new Menu("Project") {
         {
             put("l", "List all projects");
             put("n", "Create new project");
+            put("s", "Select a project");
             put("q", "Quit application");
         }
     };
@@ -60,13 +59,16 @@ public class Main extends IOController {
     public static void main(String[] args) {
         try {
             DataSourceFactory dataSourceFactory = DataSourceFactory.getInstance(ENTITY_DATA_DIRECTORY)
-                    .add("people.csv")
-                    .add("projects.csv");
+                    .create("people.csv")
+                    .create("projects.csv");
             projects = dataSourceFactory.get("projects.csv");
             people = dataSourceFactory.get("people.csv");
-            EntityModel.getInstance(projects, people, ENTITY_DATA_DELIMITER);
+            Project.setRequiredParticipants("Customer", "Contractor", "Architect");
+            loadSources(projects, people);
+            EntityModel.getInstance(projects, people);
             Output.printHeader(COMPANY_NAME);
             showMainMenu();
+            saveData();
             System.out.println("\nGoodbye!");
         } catch (NoSuchElementException error) {
             System.out.println("\nProgram execution aborted unexpectedly.");
@@ -77,10 +79,55 @@ public class Main extends IOController {
 
     }
 
+    private static void saveData() {
+        try {
+            EntityModel.savePeople(EntityFactory.getPeople());
+            EntityModel.saveProjects(EntityFactory.getProjects());
+        } catch (IOException error) {
+            System.out.println("Something went wrong while trying to save people.");
+            System.out.println(error);
+        }
+    }
+
+    private static void loadSources(DataSource projectSource, DataSource peopleSource) {
+        loadPeople(peopleSource);
+        loadProjects(projectSource);
+    }
+
+    private static void loadProjects(DataSource dataSource) {
+        String nextLine;
+        Project currentProject;
+        do {
+            nextLine = dataSource.loadLine();
+            currentProject = EntityModel.loadProject(nextLine);
+            if (currentProject != null) {
+                EntityFactory.addProject(currentProject);
+            }
+        }
+        while (nextLine != null);
+    }
+
+    private static void loadPeople(DataSource dataSource) {
+        String nextLine;
+        Person currentPerson;
+        do {
+            nextLine = dataSource.loadLine();
+            currentPerson = EntityModel.loadPerson(nextLine);
+            if (currentPerson != null) {
+                EntityFactory.addPerson(currentPerson);
+            }
+        }
+        while (nextLine != null);
+    }
+
     private static void showMainMenu() throws IllegalArgumentException, NoSuchElementException {
         String selected;
+        Project selectedProject = null;
         while (true) {
             System.out.println(MAIN_MENU);
+            if (selectedProject != null) {
+                showProjectMenu(selectedProject);
+            }
             try {
                 selected = Input.expect("").toString();
             } catch (IllegalStateException error) {
@@ -88,14 +135,21 @@ public class Main extends IOController {
                 continue;
             }
             switch (selected) {
+                case "s":
+                    int projectNumber = Input.expect("Project number").toInteger();
+                    selectedProject = EntityFactory.getProjectById(projectNumber);
+                    if (selectedProject == null) {
+                        System.out.println("Invalid project number entered.");
+                    }
+                    break;
                 case "l":
-                    String nextLine = "";
-                    while (true) {
-                        nextLine = projects.getLine();
-                        if (nextLine == null) {
-                            break;
+                    ArrayList<String> projectList = EntityFactory.listProjectOverviews();
+                    if (projectList == null) {
+                        System.out.println("No projects have been saved.");
+                    } else {
+                        for (String projectOverview : projectList) {
+                            System.out.println(projectOverview);
                         }
-                        System.out.println(nextLine);
                     }
                     break;
                 case "n":
@@ -110,8 +164,9 @@ public class Main extends IOController {
                     } else {
                         project = createProject(projectName, projectType);
                     }
-                    project.setArchitect(architect)
-                            .setContractor(contractor);
+                    project.set("Customer", customer)
+                            .set("Architect", architect)
+                            .set("Contractor", contractor);
                     showProjectMenu(project);
                     break;
                 case "q":
@@ -123,7 +178,6 @@ public class Main extends IOController {
     }
 
     private static void showProjectMenu(Project project) throws IllegalArgumentException {
-        boolean hasOutstanding = false;
         String selected;
         while (true) {
             System.out.println(project);
@@ -136,23 +190,23 @@ public class Main extends IOController {
             }
             switch (selected) {
                 case "c":
-                    setProjectDueDate(project);
+                    System.out.println("Setting due date for project: " + project.getName());
+                    project.setDueDate(queryDate());
                     break;
                 case "p":
                     project.setPaid(Input.expect("Total money paid").toDouble());
                     break;
                 case "f":
-                    hasOutstanding = project.markFinalized();
-                    if (hasOutstanding) {
+                    project.markFinalized();
+                    if (project.getStatus() != COMPLETION_STATUS.FINALIZED) {
                         System.out.println(project.getInvoice());
                     } else {
-                        project.markFinalized();
-                        System.out.println("The project was finalized on " + project.dateFinalized());
+                        System.out.println("The project was finalized on " + project.getDateFinalized());
                     }
                     break;
                 case "d":
                     // Falls through if user enters 'q' in submenu.
-                    if (showPersonnelMenu(project.getContractor())) {
+                    if (showPersonnelMenu(project.get("contractor"))) {
                         break;
                     }
                 case "q":
@@ -192,33 +246,36 @@ public class Main extends IOController {
 
     private static Project createProject(String projectName, String projectType) throws NoSuchElementException {
         int erfNumber;
-        String projectAddress;
-        double projectCost;
+        String projectAddress,
+                dateFinalized = "-";
+        double projectCost, amountPaid;
         while (true) {
+            Project thisProject = getProjectByName(projectName);
+            if (thisProject != null) {
+                /*
+                 * Since project names ought to be unique, if the name matches
+                 * then return the project with that name.
+                 */
+                System.out.println("A project with the name '" + projectName + "' already exists.");
+                return thisProject;
+            }
             try {
-                Project thisProject = getProject(projectName);
-                if (thisProject != null) {
-                    /*
-                     * Since project names ought to be unique, if the name matches
-                     * then return the project with that name.
-                     */
-                    System.out.println("A project with the name '" + projectName + "' already exists.");
-                    return thisProject;
-                }
                 erfNumber = Input.expect("Project ERF Number").toInteger();
                 projectAddress = Input.expect("Project address").toString();
                 projectCost = Input.expect("Project Cost").toDouble();
-                return EntityModel.addProject(projectName, erfNumber, projectType, projectAddress, projectCost);
+                amountPaid = Input.expect("Amount paid").toDouble();
             } catch (IllegalStateException error) {
                 // Just cancel the operation if a required field is skipped.
                 System.out.println(error);
                 continue;
-            } catch (IOException error) {
-                System.out.println("An error occurred while saving project details.");
-                System.out.println(error);
-                return null;
             }
+            break;
         }
+        if (amountPaid == projectCost) {
+            dateFinalized = queryDate();
+        }
+        return EntityFactory.addProject(projectName, erfNumber, projectType, projectAddress, projectCost,
+                amountPaid, dateFinalized);
 
     }
 
@@ -258,11 +315,12 @@ public class Main extends IOController {
                     physicalAddress = Input.expect("Physical address").toString();
                 if (emailAddress == null || emailAddress == "")
                     emailAddress = Input.expect("Email address").toString();
-                return EntityModel.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
-            } catch (IllegalStateException error) {
+                return EntityFactory.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
+            } catch(NumberFormatException error) {
+                System.out.println("A number is expected here.");
+            }
+            catch (IllegalStateException error) {
                 continue;
-            } catch(IOException error) {
-                System.out.println("An error occurred while saving details for " + position);
             }
         }
     }
@@ -272,8 +330,7 @@ public class Main extends IOController {
      * 
      * @param project
      */
-    private static void setProjectDueDate(Project project) {
-        System.out.println("Setting due date for project: " + project.getName());
+    private static String queryDate() {
         Integer year = null, month = null, dayOfMonth = null;
         LocalDate dueDate = null;
         int temp;
@@ -297,7 +354,7 @@ public class Main extends IOController {
                 dueDate = LocalDate.of(year, month, dayOfMonth);
             }
         }
-        project.setDueDate(dueDate.toString());
+        return dueDate.toString();
     }
 
 }

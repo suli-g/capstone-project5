@@ -92,16 +92,5 @@ public class InputTest {
             input.toInteger();
         });
     }
-
-    @Test
-    public void testNullInput() {
-        String testInput = "hello world";
-        provideInput(testInput);
-        Input input = null;
-        assertThrows(NullPointerException.class, () -> {
-            input.toDouble();
-            input.toInteger();
-        });
-    }
 }
     

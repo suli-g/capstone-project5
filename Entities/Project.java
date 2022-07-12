@@ -2,22 +2,29 @@ package Entities;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import Enums.COMPLETION_STATUS;
 
 /**
  * Represents a project
  */
 public class Project extends Entity {
     // The format to use for all project-related date strings.
-    private Person customer,
-            contractor,
-            architect;
-    private double cost,
+    private static List<String> requiredParticipants;
+    private ArrayList<String> missingParticipants;
+    public static List<String> getRequiredParticipants() {
+        return requiredParticipants;
+    }
+
+    private HashMap<String, Person> participants;
+    private double cost = 0,
             paid = 0;
-
-    private boolean isFinalized = false;
-    private LocalDate dueDate,
-            dateFinalized;
-
+    private String dueDate,
+            dateFinalized = null;
     /**
      * Project constructor.
      * 
@@ -30,6 +37,29 @@ public class Project extends Entity {
     public Project(String projectName, String projectAddress, String projectType, int erfNumber, double projectCost) {
         super(projectName, projectAddress, projectType, erfNumber);
         cost = projectCost;
+        participants = new HashMap<>();
+        this.missingParticipants = new ArrayList<>() {{
+            for (String role: getRequiredParticipants()) {
+                add(role);
+            }
+        }};
+    }
+
+
+    public Person get(String role) {
+        return participants.get(role);
+    }
+
+    public Project set(String role, Person person) throws IllegalArgumentException {
+        if (!requiredParticipants.contains(role)) {
+            throw new IllegalArgumentException("The role '"+ role +"' is not a valid project role.");
+        }
+        participants.put(role, person);
+        return this;
+    }
+
+    public static void setRequiredParticipants(String...positions) {
+        requiredParticipants = Arrays.asList(positions);
     }
 
     /**
@@ -42,43 +72,11 @@ public class Project extends Entity {
      */
     public Project setDueDate(String date) throws DateTimeParseException {
         // First validate the details of the new date before assigning it.
-        dueDate = LocalDate.parse(date);
-        if (dueDate.isBefore(LocalDate.now())) {
+        if (LocalDate.parse(date).isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("That date has already expired!");
+        } else {
+            dueDate = date;
         }
-        return this;
-    }
-
-    /**
-     * Sets the customer for this project.
-     * 
-     * @param newCustomer the customer.
-     * @return this project.
-     */
-    public Project setCustomer(Person customer) {
-        this.customer = customer;
-        return this;
-    }
-
-    /**
-     * Sets the contractor for this project.
-     * 
-     * @param contractor the contractor.
-     * @return this project.
-     */
-    public Project setContractor(Person contractor) {
-        this.contractor = contractor;
-        return this;
-    }
-
-    /**
-     * Sets the architect for this project.
-     * 
-     * @param architect the architect.
-     * @return this project.
-     */
-    public Project setArchitect(Person architect) {
-        this.architect = architect;
         return this;
     }
 
@@ -91,27 +89,6 @@ public class Project extends Entity {
     public Project setPaid(double amount) {
         paid = amount;
         return this;
-    }
-
-    /**
-     * @return the customer.
-     */
-    public Person getCustomer() {
-        return customer;
-    }
-
-    /**
-     * @return the contractor.
-     */
-    public Person getContractor() {
-        return contractor;
-    }
-
-    /**
-     * @return the architect.
-     */
-    public Person getArchitect() {
-        return architect;
     }
 
     /**
@@ -138,8 +115,8 @@ public class Project extends Entity {
     /**
      * @return the date this project was finalized.
      */
-    public String dateFinalized() {
-        return dateFinalized.toString();
+    public String getDateFinalized() {
+        return dateFinalized;
     }
 
     /**
@@ -147,17 +124,36 @@ public class Project extends Entity {
      * 
      * @return the finalization status of the project.
      */
-    public boolean markFinalized() {
-        isFinalized = true;
-        dateFinalized = LocalDate.now();
-        return cost != paid;
+    public Project markFinalized() {
+        return this.markFinalized(LocalDate.now().toString());
     }
 
     /**
-     * @return whether this project is finalized or not.
+     * Marks the project as finalized on the given date.
+     * 
+     * @return the finalization status of the project.
      */
-    public boolean getIsFinalized() {
-        return isFinalized;
+    public Project markFinalized(String finalizationDate) throws DateTimeParseException {
+        if (missingParticipants.size() == 0 && cost == paid) {
+            if (finalizationDate == "-") {
+                this.dateFinalized = LocalDate.now().toString();
+            }
+            this.dateFinalized = LocalDate.parse(finalizationDate).toString();
+        }
+        return this;
+    }
+
+    /**
+     *{ @return project finalization status}
+     */
+    public COMPLETION_STATUS getStatus() {
+            if (dateFinalized != null) {
+                return COMPLETION_STATUS.FINALIZED;
+            }
+            else if (dueDate != null && LocalDate.parse(dueDate).isBefore(LocalDate.now())) {
+                return COMPLETION_STATUS.OVERDUE;
+            }
+            return COMPLETION_STATUS.IN_PROGRESS;
     }
 
     /**
@@ -166,17 +162,24 @@ public class Project extends Entity {
      * @return the project invoice.
      */
     public String getInvoice() {
-        String receipt = String.format("""
+        StringBuilder invoiceBuilder = new StringBuilder();
+        Person participant;
+        for (String role: requiredParticipants) {
+            participant = get(role);
+            invoiceBuilder
+                .append("---")
+                .append(role)
+                .append(" Details---\n")
+                .append(participant == null ? "N/A" : participant)
+                .append('\n');
+        }
+        invoiceBuilder.append("---Account Details---\n")
+            .append(String.format("""
                 Total Cost:            R%.2f
                 Total Paid:            R%.2f
-                Outstanding Balance:   R%.2f
-
-                """, cost, paid, cost - paid);
-        return new StringBuilder()
-                .append("---Customer Details---\n")
-                .append(customer)
-                .append("---Account Details---\n")
-                .append(receipt)
+                Outstanding Balance:   R%.2f\n
+                """, cost, paid, cost - paid));
+        return invoiceBuilder
                 .toString();
     }
 
@@ -192,20 +195,11 @@ public class Project extends Entity {
                 Project Name:       %s
                 Project Address:    %s
                 Project Type:       %s
-                Project Number:     %d
-                Project Price:      %.2f
-
-                """, getName(), address, getType(), getNumber(), getCost());
+                ERF Number:     %d
+                """, getName(), address, getType(), getNumber());
         return new StringBuilder()
                 .append(projectDetails)
                 .append(getInvoice())
-
-                .append("---Architect---\n")
-                .append(architect)
-
-                .append("---Contractor---\n")
-                .append(contractor)
-
                 .toString();
     }
 }

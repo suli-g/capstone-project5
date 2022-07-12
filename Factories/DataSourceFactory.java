@@ -33,9 +33,12 @@ public class DataSourceFactory {
         return dataSources.get(directory.resolve(sourceFileName));
     }
 
-    public DataSourceFactory add(String sourceFileName) throws IOException, UnsupportedOperationException{
+    public DataSourceFactory create(String sourceFileName) throws IOException, UnsupportedOperationException{
         DataSource currentDataSource = null;
         Path fullPath = directory.resolve(sourceFileName);
+        if (!Files.exists(fullPath)) {
+            Files.createFile(fullPath);
+        }
         currentDataSource = new DataSource(fullPath);
         dataSources.put(fullPath, currentDataSource);
         return this;
