@@ -7,6 +7,7 @@ import java.util.HashMap;
  */
 public class Menu extends HashMap<String, String> {
     private static HashMap<String, Menu> menuInstances;
+    private static String borderMarker = "-";
     private String title;
     /**
      * Creates a menu with the given name and options.
@@ -18,23 +19,44 @@ public class Menu extends HashMap<String, String> {
         title = menuName;
     }
     
-    public static Menu getMenu(String title) {
+    /**
+     * Gets a menu instance.
+     * 
+     * @param menuTitle the title of the menu returned.
+     * @return the menu with {@code title == menuTitle}, else creates a new menu instance.
+     */
+    public static Menu getMenu(String menuTitle) {
         if (menuInstances == null) {
             menuInstances = new HashMap<>();
         }
-        if (menuInstances.get(title) == null) {
-            menuInstances.put(title, new Menu(title));
+        if (menuInstances.get(menuTitle) == null) {
+            menuInstances.put(menuTitle, new Menu(menuTitle));
         }
-        return menuInstances.get(title);
+        return menuInstances.get(menuTitle);
     }
 
+    /**
+     * Render this menu into a logical menu-type format.
+     * 
+     * @return this menu's details.
+     */
     @Override
     public String toString() {
-        StringBuilder menuDescription = new StringBuilder(title)
+        int titleLength = title.length() + 6;
+        // Align the borders with title
+        String optionFormat = "\n%-"+ titleLength + "s%-16s";
+        StringBuilder menuDescription = new StringBuilder(borderMarker.repeat(titleLength))
+            .append('\n')
+            .append(title)
             .append(" Menu:");
-        this.forEach((option, description) -> {
-            menuDescription.append('\n').append("").append(option).append(":\t").append(description);
-        });
-        return menuDescription.toString();
+            this.forEach((option, description) -> {
+                menuDescription
+                .append(String.format(optionFormat, option, description));
+            });
+            return menuDescription
+            .append("\n")
+            .append(borderMarker.repeat(titleLength))
+            .append("\n")
+            .toString();
     }
 }

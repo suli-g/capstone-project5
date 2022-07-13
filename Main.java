@@ -6,17 +6,61 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
+import Components.EntityModel;
 import Components.Menu;
 import Entities.Person;
 import Entities.Project;
-import Enums.COMPLETION_STATUS;
 import Factories.DataSourceFactory;
 import Factories.EntityFactory;
-import Factories.EntityModel;
 import IO.DataSource;
 import IO.IOController;
 import IO.Input;
 import IO.Output;
+
+
+class ProjectOverview {
+    private static final String OVERVIEW_FORMAT = """
+            project number:             %-8d
+            project name:               %-8s
+            project cost:               R%.2f
+            total paid to date:         R%.2f
+            customer name:              %-8s
+            customer contact number:    %-8s
+            completion status:          %-8s
+            date finalized:             %-8s
+            """;
+    private int projectNumber;
+    private Project project;
+
+    public ProjectOverview(int projectNumber, Project project) {
+        this.project = project;
+        this.projectNumber = projectNumber;
+    }
+
+    public String toString() {
+        Project.COMPLETION_STATUS status = project.getStatus();
+        String dateFinalized = "n/a";
+        if (status == Project.COMPLETION_STATUS.FINALIZED) {
+            dateFinalized = project.getDateFinalized();
+        }
+        Person customer = project.getPerson("Customer");
+        return new StringBuilder()
+                .append("-")
+                .append("\n")
+                .append(String.format(OVERVIEW_FORMAT, 
+                    projectNumber,
+                    project.getName(),
+                    project.getCost(),
+                    project.getPaid(),
+                    customer.getName(),
+                    customer.getPhoneNumber(),
+                    status.label,
+                    dateFinalized
+                    ))
+                .append("-")
+                .toString();
+    }
+}
 
 public class Main extends IOController {
     private static final String COMPANY_NAME = "POISED",
@@ -24,50 +68,57 @@ public class Main extends IOController {
             REUSE_PERSON_MESSAGE = "The information given matches some in the database. Use details for %s? (Y/n)";
     private static final Menu MAIN_MENU = new Menu("Project") {
         {
-            put("l", "List all projects");
-            put("n", "Create new project");
-            put("s", "Select a project");
-            put("q", "Quit application");
+            put("list", "List all projects");
+            put("create", "Create new project");
+            put("select", "Select a project");
+            put("quit", "Quit application");
         }
     };
 
     private static final Menu PROJECT_MENU = new Menu("Project") {
         {
-            put("c", "Change due date");
-            put("p", "Change amount paid");
-            put("d", "Change a contractor's details");
-            put("f", "Finalize the project");
-            put("q", "Quit application");
+            put("due", "Change due date");
+            put("paid", "Change amount paid");
+            put("contractor", "Change a contractor's details");
+            put("finalize", "Finalize the project");
+            put("back", "Back to Main Menu");
+            put("quit", "Quit application");
         }
     };
 
     private static final Menu PERSONNEL_MENU = new Menu("Personnel") {
         {
-            put("e", "Change Email Address");
-            put("p", "Change Phone Number");
-            put("b", "Back to main Menu");
-            put("q", "Quit Application");
+            put("email", "Change Email Address");
+            put("phone", "Change Phone Number");
+            put("back", "Back to Main Menu");
+            put("quit", "Quit Application");
         }
     };
 
     private static DataSource projects, people;
-
     private Main() {
         super();
     }
 
     public static void main(String[] args) {
         try {
-            DataSourceFactory dataSourceFactory = DataSourceFactory.getInstance(ENTITY_DATA_DIRECTORY)
-                    .create("people.csv")
-                    .create("projects.csv");
-            projects = dataSourceFactory.get("projects.csv");
-            people = dataSourceFactory.get("people.csv");
-            Project.setRequiredParticipants("Customer", "Contractor", "Architect");
-            loadSources(projects, people);
+            /*
+             * Initial loading steps:
+             * Create "projects.csv" and "people.csv" at ENTITY_DATA_DIRECTORY if they don't
+             * already exist.
+             */
+            DataSourceFactory dataSourceFactory = DataSourceFactory.setRootDirectory(ENTITY_DATA_DIRECTORY)
+                    .addDataSource("people.csv")
+                    .addDataSource("projects.csv");
+            projects = dataSourceFactory.getDataSource("projects.csv");
+            people = dataSourceFactory.getDataSource("people.csv");
+            Project.setRequiredRoles("Customer", "Contractor", "Architect");
+            loadPeople(people);
+            loadProjects(projects);
             EntityModel.getInstance(projects, people);
+            // Initial loading complete.
             Output.printHeader(COMPANY_NAME);
-            showMainMenu();
+            mainMenuLoop();
             saveData();
             System.out.println("\nGoodbye!");
         } catch (NoSuchElementException error) {
@@ -76,174 +127,244 @@ public class Main extends IOController {
             System.out.println("\nSomething went wrong while accessing the data sources.");
             System.out.println(error);
         }
-
     }
 
+    /**
+     * Saves all Entity Objects created during execution to the files created during
+     * initial loading.
+     */
     private static void saveData() {
         try {
-            EntityModel.savePeople(EntityFactory.getPeople());
-            EntityModel.saveProjects(EntityFactory.getProjects());
+            EntityModel.unparsePeople(EntityFactory.getPeople());
+            EntityModel.unparseProjects(EntityFactory.getProjects());
         } catch (IOException error) {
             System.out.println("Something went wrong while trying to save people.");
             System.out.println(error);
         }
     }
 
-    private static void loadSources(DataSource projectSource, DataSource peopleSource) {
-        loadPeople(peopleSource);
-        loadProjects(projectSource);
-    }
-
+    /**
+     * Creates {@link Entities.Project} instances using the text stored in
+     * {@code dataSource}.
+     * 
+     * @param dataSource
+     */
     private static void loadProjects(DataSource dataSource) {
         String nextLine;
         Project currentProject;
         do {
-            nextLine = dataSource.loadLine();
-            currentProject = EntityModel.loadProject(nextLine);
+            nextLine = dataSource.readLine();
+            if (nextLine == null) {
+                break;
+            }
+            currentProject = EntityModel.parseProject(nextLine);
             if (currentProject != null) {
                 EntityFactory.addProject(currentProject);
             }
-        }
-        while (nextLine != null);
+        } while (true);
     }
 
+    /**
+     * Creates {@link Entities.Person} instances using the text stored in
+     * {@code dataSource}.
+     * 
+     * @param dataSource
+     */
     private static void loadPeople(DataSource dataSource) {
         String nextLine;
         Person currentPerson;
         do {
-            nextLine = dataSource.loadLine();
-            currentPerson = EntityModel.loadPerson(nextLine);
+            nextLine = dataSource.readLine();
+            currentPerson = EntityModel.parsePerson(nextLine);
             if (currentPerson != null) {
-                EntityFactory.addPerson(currentPerson);
+                EntityFactory.assignPerson(currentPerson);
             }
-        }
-        while (nextLine != null);
+        } while (nextLine != null);
     }
 
-    private static void showMainMenu() throws IllegalArgumentException, NoSuchElementException {
-        String selected;
+    /**
+     * Displays the main menu and uses user input to execute actions.
+     * 
+     * @throws IllegalArgumentException
+     * @throws NoSuchElementException
+     */
+    private static void mainMenuLoop() throws NoSuchElementException {
+        String selectedOption;
         Project selectedProject = null;
+        // Used to propagate a "quit" selection in sub menus.
+        boolean shouldQuit = false;
         while (true) {
-            System.out.println(MAIN_MENU);
-            if (selectedProject != null) {
-                showProjectMenu(selectedProject);
+            if (shouldQuit) {
+                break;
             }
             try {
-                selected = Input.expect("").toString();
-            } catch (IllegalStateException error) {
-                System.out.println(error);
+                if (selectedProject != null) {
+                    // Show a Project-specific menu if a project has been selected.
+                    shouldQuit = projectMenuLoop(selectedProject);
+                    selectedProject = null;
+                } else {
+                    System.out.println(MAIN_MENU);
+                }
+                selectedOption = Input.expect("").toString();
+                switch (selectedOption) {
+                    case "select":
+                        // Prompt the user for a project number and select the project with the given
+                        // index if it exists.\
+                        int projectNumber = Input.expect("Project number").toInteger();
+                        selectedProject = EntityFactory.getProjectById(projectNumber);
+                        if (selectedProject == null) {
+                            System.out.println("Invalid project number entered.");
+                        }
+                        break;
+                    case "list":
+                        // List an overview for each project if any exist.
+                        listProjects();
+                        break;
+                    case "create":
+                        // Create people first so that a default name can be set on creation.
+                        Person customer = createPerson("customer"),
+                                contractor,
+                                architect;
+                        Project project;
+                        String projectName = Input.query("Project name").toString();
+                        String projectType = Input.expect("Project Type").toString();
+                        if (projectName == "") {
+                            project = createProject(projectType + " " + customer.getLastName(), projectType);
+                        } else {
+                            project = createProject(projectName, projectType);
+                        }
+                        if (project.getPerson("Customer") == null) {
+                            project.set("Customer", customer);
+                        }
+                        if (project.getPerson("Architect") == null) {
+                            architect = createPerson("contractor");
+                            project.set("Architect", architect);
+                        }
+                        if (project.getPerson("Contractor") == null) {
+                            contractor = createPerson("architect");
+                            project.set("Contractor", contractor);
+                        }
+                        // default to "{Customer Last name} {Project type}" if no project name is given
+    
+                        // Use the result of projectMenuLoop to decide if mainMenuLoop should end as
+                        // well.
+                        shouldQuit = projectMenuLoop(project);
+                        break;
+                    case "quit":
+                        shouldQuit = true;
+                        break;
+                    default:
+                        System.out.println("Incorrect option entered.");
+                }
+            } catch(IllegalStateException error) {
+                System.out.println(error.getLocalizedMessage());
                 continue;
             }
-            switch (selected) {
-                case "s":
-                    int projectNumber = Input.expect("Project number").toInteger();
-                    selectedProject = EntityFactory.getProjectById(projectNumber);
-                    if (selectedProject == null) {
-                        System.out.println("Invalid project number entered.");
-                    }
-                    break;
-                case "l":
-                    ArrayList<String> projectList = EntityFactory.listProjectOverviews();
-                    if (projectList == null) {
-                        System.out.println("No projects have been saved.");
-                    } else {
-                        for (String projectOverview : projectList) {
-                            System.out.println(projectOverview);
-                        }
-                    }
-                    break;
-                case "n":
-                    Person customer = createPerson("customer"),
-                            contractor = createPerson("contractor"),
-                            architect = createPerson("architect");
-                    String projectName = Input.query("Project name").toString();
-                    String projectType = Input.expect("Project Type").toString();
-                    Project project;
-                    if (projectName == "") {
-                        project = createProject(projectType + " " + customer.getLastName(), projectType);
-                    } else {
-                        project = createProject(projectName, projectType);
-                    }
-                    project.set("Customer", customer)
-                            .set("Architect", architect)
-                            .set("Contractor", contractor);
-                    showProjectMenu(project);
-                    break;
-                case "q":
-                    return;
-                default:
-                    System.out.println("Incorrect option entered.");
-            }
+            
         }
     }
 
-    private static void showProjectMenu(Project project) throws IllegalArgumentException {
+    /**
+     * Shows a project-specific menu, given a {@link Entities.Project} object.
+     * 
+     * @param project The project to desplay.
+     * @return a boolean indicating whether the program should end or not.
+     * @throws IllegalArgumentException
+     */
+    private static boolean projectMenuLoop(Project project) {
         String selected;
         while (true) {
+            // Show the project's details and then the menu.
             System.out.println(project);
             System.out.println(PROJECT_MENU);
             try {
                 selected = Input.expect("").toString();
-            } catch (IllegalStateException error) {
-                System.out.println(error);
-                continue;
-            }
             switch (selected) {
-                case "c":
+                case "due":
                     System.out.println("Setting due date for project: " + project.getName());
                     project.setDueDate(queryDate());
                     break;
-                case "p":
+                case "paid":
                     project.setPaid(Input.expect("Total money paid").toDouble());
                     break;
-                case "f":
+                case "finalize":
+                    // Finalize the project if all details are set, otherwise print an invoice.
                     project.markFinalized();
-                    if (project.getStatus() != COMPLETION_STATUS.FINALIZED) {
+                    if (project.getStatus() != Project.COMPLETION_STATUS.FINALIZED) {
                         System.out.println(project.getInvoice());
                     } else {
                         System.out.println("The project was finalized on " + project.getDateFinalized());
                     }
                     break;
-                case "d":
+                case "contractor":
                     // Falls through if user enters 'q' in submenu.
-                    if (showPersonnelMenu(project.get("contractor"))) {
-                        break;
+                    if (personnelMenuLoop(project.getPerson("contractor"))) {
+                        return true;
                     }
-                case "q":
-                    return;
+                case "quit":
+                    return true;
+                case "back":
+                    return false;
                 default:
                     System.out.println("Incorrect option entered.");
             }
-        }
+            } catch (IllegalStateException error) {
+                System.out.println(error);
+                continue;
+            }
+        } 
     }
 
-    private static boolean showPersonnelMenu(Person contractor) throws IllegalArgumentException {
+    /**
+     * Shows a person-specific menu, given a {@link Entities.Person} object.
+     * 
+     * @param person the person object whose details should be modified.
+     * @return a boolean indicating whether the program should end or not.
+     * @throws IllegalArgumentException
+     */
+    private static boolean personnelMenuLoop(Person person) {
         String selected;
         while (true) {
+            // Show the person's details and then the menu.
+            System.out.println(person);
+            System.out.println(PERSONNEL_MENU);
             try {
                 selected = Input.expect("").toString();
             } catch (IllegalStateException error) {
                 System.out.println(error);
                 continue;
             }
-            System.out.println(PERSONNEL_MENU);
             switch (selected) {
-                case "e":
-                    contractor.setEmailAddress(Input.query("New email address").toString());
+                case "email":
+                    person.setEmailAddress(Input.query("New email address").toString());
                     break;
-                case "p":
-                    contractor.setPhoneNumber(Input.query("New phone number").toInteger());
+                case "phone":
+                    int newPhoneNumber;
+                    try {
+                        newPhoneNumber = Input.query("New phone number").toInteger(9);
+                        person.setPhoneNumber(newPhoneNumber);
+                    } catch (NumberFormatException error) {
+                        System.out.println(error);
+                    }
                     break;
-                case "b":
-                    return true;
-                case "q":
+                case "back":
                     return false;
+                case "quit":
+                    return true;
                 default:
                     System.out.println("Incorrect option entered.");
             }
         }
     }
 
+    /**
+     * Creates a new {@link Entities.Project} object using {@link Factories.EntityFactory#addProject(String, int, String, String, double, double, String)}.
+     * 
+     * @param projectName the name of the project
+     * @param projectType the type of the project
+     * @return the project with {@code name == projectName}
+     * @throws NoSuchElementException
+     */
     private static Project createProject(String projectName, String projectType) throws NoSuchElementException {
         int erfNumber;
         String projectAddress,
@@ -266,41 +387,46 @@ public class Main extends IOController {
                 amountPaid = Input.expect("Amount paid").toDouble();
             } catch (IllegalStateException error) {
                 // Just cancel the operation if a required field is skipped.
-                System.out.println(error);
+                System.out.println(error.getLocalizedMessage());
+                continue;
+            } catch (NumberFormatException error) {
+                System.out.println(error.getLocalizedMessage());
                 continue;
             }
             break;
-        }
-        if (amountPaid == projectCost) {
-            dateFinalized = queryDate();
         }
         return EntityFactory.addProject(projectName, erfNumber, projectType, projectAddress, projectCost,
                 amountPaid, dateFinalized);
 
     }
 
-    private static Person createPerson(String position) throws NoSuchElementException {
-        System.out.println("Setting details for " + position + ": ");
+    /**
+     * Creates a new {@link Entities.Person} object using {@link Factories.EntityFactory#addPerson(int, String, String, String, String)}.
+     * 
+     * @param role the role of the person in the project.
+     * @return the person created.
+     * @throws NoSuchElementException
+     */
+    private static Person createPerson(String role) throws NoSuchElementException {
+        System.out.println("Setting details for " + role + ": ");
         String firstName = null,
                 lastName = null,
                 physicalAddress = null,
                 emailAddress = null;
         Integer phoneNumber = null;
-        String useOld = null;
         Person thisPerson;
         while (true) {
             try {
                 if (phoneNumber == null)
-                    phoneNumber = Input.expect("Phone number").toInteger();
+                    phoneNumber = Input.expect("Phone number").toInteger(9);
                 thisPerson = getPerson(phoneNumber);
                 /*
                  * Since phone numbers are unique, return a person if there is a
                  * phone number that matches.
                  */
                 if (thisPerson != null) {
-                    useOld = Input.query(String.format(REUSE_PERSON_MESSAGE, thisPerson.getName()))
-                            .toString();
-                    if (!useOld.equalsIgnoreCase("n")) {
+                        Input.query(String.format(REUSE_PERSON_MESSAGE, thisPerson.getName()));
+                    if (Input.getInstance().toBoolean()) {
                         return thisPerson;
                     } else {
                         phoneNumber = null;
@@ -316,10 +442,13 @@ public class Main extends IOController {
                 if (emailAddress == null || emailAddress == "")
                     emailAddress = Input.expect("Email address").toString();
                 return EntityFactory.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
-            } catch(NumberFormatException error) {
+            } catch (NumberFormatException error) {
                 System.out.println("A number is expected here.");
-            }
-            catch (IllegalStateException error) {
+            } catch (IllegalArgumentException error) {
+                System.out.print(error.getLocalizedMessage());
+                System.out.println("(with optional leading zero)");
+            } catch (IllegalStateException error) {
+                System.out.println(error.getLocalizedMessage());
                 continue;
             }
         }
@@ -357,4 +486,16 @@ public class Main extends IOController {
         return dueDate.toString();
     }
 
+    private static void listProjects() {
+        ArrayList<Project> projectList = EntityFactory.getProjects();
+        if (projectList.size() > 0) {
+            ProjectOverview overview;
+            for (int projectNumber = 0; projectNumber < projectList.size(); projectNumber++) {
+                overview = new ProjectOverview(projectNumber, getProjectById(projectNumber));
+                System.out.println(overview.toString());
+            }
+        } else {
+            System.out.println("No projects have been saved.");
+        }
+    }
 }

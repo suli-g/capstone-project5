@@ -81,6 +81,9 @@ public class Person extends Entity {
         return firstName + ' ' + lastName;
     }
 
+    /**
+     * Stores this Person's details in a logical format.
+     */
     @Override
     public String toString() {
         return String.format("""

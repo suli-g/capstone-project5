@@ -4,13 +4,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import Entities.Person;
 import Entities.Project;
-import Enums.COMPLETION_STATUS;
 
 /**
  * Defines EntityFactory.
  */
 public class EntityFactory {
-    private static HashMap<String, Project> projects = new HashMap<>();
+    private static ArrayList<Project> projects = new ArrayList<>();
     private static ArrayList<String> projectNames = new ArrayList<>();
     private static HashMap<Integer, Person> people = new HashMap<>();
 
@@ -28,85 +27,95 @@ public class EntityFactory {
         return addProject(project);
     }
 
+    /**
+     * Adds a project to the project list.
+     * 
+     * @param project the project to add.
+     * @return the added project.
+     */
     public static Project addProject(Project project) {
-        projectNames.add(project.getName());
-        projects.put(project.getName(), project);
-        return project;
+        String projectName = project.getName();
+        projectNames.add(projectName);
+        projects.add(project);
+        // Make sure the project was added.
+        return projects.get(projectNames.indexOf(projectName));
     }
 
     /**
-     * Prompts the user for a Person's details, then creates and stores
+     * Adds a new {@link Entities.Person} object to {@link #people} using
+     * {@link #assignPerson(Person)}
      * 
-     * @param position
-     * @return the created person
+     * @param phoneNumber     of the person
+     * @param firstName       of the person
+     * @param lastName        of the person
+     * @param physicalAddress of the person
+     * @param emailAddress    of the person
+     * @return the person
      */
     public static Person addPerson(int phoneNumber, String firstName, String lastName, String physicalAddress,
             String emailAddress) {
         Person person = new Person(firstName, lastName, physicalAddress, emailAddress, phoneNumber);
-        return addPerson(person);
+        return assignPerson(person);
     }
 
-    public static Person addPerson(Person person) {
+    /**
+     * Assigns a {@link Entities.Person} object to the result of
+     * {@link Entities.Person#getNumber()} in {@link #people}
+     * on that object.
+     * 
+     * @param person the assigned person
+     * @return
+     */
+    public static Person assignPerson(Person person) {
         people.put(person.getNumber(), person);
         return person;
     }
 
+    /**
+     * Retrieves a {@link Entities.Person} object from {@link #people} using the
+     * given {@code phoneNumber}.
+     * 
+     * @param phoneNumber of the person to retrieve.
+     * @return the {@link Entities.Person} linked to {@code phoneNumber}.
+     */
     public static Person getPerson(int phoneNumber) {
         return people.get(phoneNumber);
     }
 
+    /**
+     * Retrieves the {@link Entities.Project} assigned to {@code projectName} from {@link #projects}.
+     * 
+     * @param projectName name of the project to retrieve.
+     * @return the project object.
+     */
     public static Project getProjectByName(String projectName) {
-        return projects.get(projectName);
+        return projects.get(projectNames.indexOf(projectName));
     }
 
+    /**
+     * Retrieves the {@link Entities.Project} with index {@code projectNumber} from {@link #projects}.
+     * 
+     * @param projectNumber
+     * @return
+     */
     public static Project getProjectById(int projectNumber) {
-        if (projectNumber >= projectNames.size()) {
+        if (projectNumber >= projects.size()) {
             return null;
         }
-        String projectName = projectNames.get(projectNumber);
-        return projects.get(projectName);
+        return projects.get(projectNumber);
     }
 
-    public static ArrayList<String> listProjectOverviews() {
-        if (projects.size() > 0){
-            ArrayList<String> projectOverviews = new ArrayList<>();
-            projectOverviews.add(String.format(ProjectOverview.OVERVIEW_FORMAT, "#", "name", "customer name", "customer phone number", "status", "date finalized"));
-            ProjectOverview overview;
-            for (int projectNumber = 0; projectNumber < projects.size(); projectNumber++) { 
-                overview = new ProjectOverview(projectNumber, getProjectById(projectNumber));
-                projectOverviews.add(overview.toString());
-            }
-            return projectOverviews;
-        }
-        return null;
-    }
-
-    public static HashMap<String, Project> getProjects() {
+    /**
+     * @return {@link #projects}.
+     */
+    public static ArrayList<Project> getProjects() {
         return projects;
     }
 
+    /**
+     * @return {@link #people}.
+     */
     public static HashMap<Integer, Person> getPeople() {
         return people;
-    }
-}
-
-class ProjectOverview {
-    public static final String OVERVIEW_FORMAT = "| %-3s | %-32s | %-32s | %-21s | %-16s | %-14s |";
-    private int projectNumber;
-    private Project project;
-
-    public ProjectOverview(int projectNumber, Project project) {
-        this.project = project;
-        this.projectNumber = projectNumber;
-    }
-
-    public String toString() {
-        COMPLETION_STATUS status = project.getStatus();
-        String dateFinalized = "-";
-        if (status == COMPLETION_STATUS.FINALIZED) {
-            dateFinalized = project.getDateFinalized();
-        }
-        Person customer = project.get("Customer");
-        return String.format(OVERVIEW_FORMAT, Integer.toString(projectNumber), project.getName(), customer.getName(), customer.getPhoneNumber(), project.getName(), status.label, dateFinalized);
     }
 }

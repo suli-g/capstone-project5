@@ -6,6 +6,9 @@ interface Console {
     char EDGE_CHAR = '-';
 }
 
+/**
+ * Handles application output.
+ */
 public class Output implements Console {
     private static Output displayInstance;
 
