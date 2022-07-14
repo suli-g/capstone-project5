@@ -8,83 +8,22 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import Components.EntityModel;
 import Components.Menu;
+import Components.ProjectOverview;
 import Entities.Person;
 import Entities.Project;
 import Factories.DataSourceFactory;
 import Factories.EntityFactory;
+import Factories.PersonFactory;
+import Factories.ProjectFactory;
 import IO.DataSource;
 import IO.IOController;
 import IO.Input;
 import IO.Output;
 
-/**
- * Represents a ProjectOverview
- */
-class ProjectOverview {
-    private static final String OVERVIEW_FORMAT = """
-            project number:             %-8d
-            project name:               %-8s
-            project cost:               R%.2f
-            total paid to date:         R%.2f
-            customer name:              %-8s
-            customer contact number:    %-8s
-            contractor name:            %-8s
-            contractor contact number:  %-8s
-            architect name:             %-8s
-            architect contact number:   %-8s
-            completion status:          %-8s
-            date finalized:             %-8s
-            """;
-    private int projectNumber;
-    private Project project;
-
-    /**
-     * Creates a ProjectOverview object.
-     * 
-     * @param projectNumber the project number to assign to {@link #project}
-     * @param project the project to present an overview of.
-     */
-    public ProjectOverview(int projectNumber, Project project) {
-        this.project = project;
-        this.projectNumber = projectNumber;
-    }
-
-    public String toString() {
-        Project.COMPLETION_STATUS status = project.getStatus();
-        String dateFinalized = "n/a";
-        if (status == Project.COMPLETION_STATUS.FINALIZED) {
-            dateFinalized = project.getDateFinalized();
-        }
-        Person customer = project.getPerson("Customer");
-        Person contractor = project.getPerson("Contractor");
-        Person architect = project.getPerson("Customer");
-        return new StringBuilder()
-                .append("-")
-                .append("\n")
-                .append(String.format(OVERVIEW_FORMAT, 
-                    projectNumber,
-                    project.getName(),
-                    project.getCost(),
-                    project.getPaid(),
-                    customer == null ? "n/a" : customer.getName(),
-                    customer == null ? "n/a" : customer.getPhoneNumber(),
-                    contractor == null ? "n/a" : contractor.getName(),
-                    contractor == null ? "n/a" : contractor.getPhoneNumber(),
-                    architect == null ? "n/a" : architect.getName(),
-                    architect == null ? "n/a" : architect.getPhoneNumber(),
-                    status.label,
-                    dateFinalized
-                    ))
-                .append("-")
-                .toString();
-    }
-}
-
 public class Main extends IOController {
     private static final String COMPANY_NAME = "POISED",
-            ENTITY_DATA_DIRECTORY = "entity-data",
-            REUSE_PERSON_MESSAGE = "The information given matches some in the database. Use details for %s? (Y/n)";
-    private static final Menu MAIN_MENU = new Menu("Project") {
+            ENTITY_DATA_DIRECTORY = "data";
+                private static final Menu MAIN_MENU = new Menu("Project") {
         {
             put("list", "List all projects");
             put("list -i", "List incomplete projects");
@@ -255,43 +194,43 @@ public class Main extends IOController {
                         break;
                     case "list":
                         // List an overview for each project if any exist.
-                        listProjects();
+                        ProjectFactory.list();
                         break;
                     case "list -i":
                         // List an overview for each project if any exist.
-                        listProjects(Project.COMPLETION_STATUS.IN_PROGRESS);
+                        ProjectFactory.list(Project.COMPLETION_STATUS.IN_PROGRESS);
                         break;
                     case "list -o":
                         // List an overview for each project if any exist.
-                        listProjects(Project.COMPLETION_STATUS.OUTSTANDING);
+                        ProjectFactory.list(Project.COMPLETION_STATUS.OUTSTANDING);
                         break;
                     case "create":
                         // Create people first so that a default name can be set on creation.
-                        Person customer = createPerson("Customer"),
+                        Person customer = PersonFactory.create("Customer"),
                                 contractor,
                                 architect;
                         String projectName = Input.query("Project name").toString();
                         String projectType = Input.expect("Project Type").toString();
                         // default to "{Customer Last name} {Project type}" if no project name is provided.
                         if (projectName == "") {
-                            selectedProject = createProject(projectType + " " + customer.getLastName(), projectType);
+                            selectedProject = ProjectFactory.create(projectType + " " + customer.getLastName(), projectType);
                         } else {
-                            selectedProject = createProject(projectName, projectType);
+                            selectedProject = ProjectFactory.create(projectName, projectType);
                         }
                         if (selectedProject.getPerson("Customer") == null) {
                             selectedProject.setPerson("Customer", customer);
                         }
                         if (selectedProject.getPerson("Architect") == null) {
-                            architect = createPerson("Contractor");
+                            architect = PersonFactory.create("Contractor");
                             selectedProject.setPerson("Architect", architect);
                         }
                         if (selectedProject.getPerson("Contractor") == null) {
-                            contractor = createPerson("Architect");
+                            contractor = PersonFactory.create("Architect");
                             selectedProject.setPerson("Contractor", contractor);
                         }
                         break;
                     case "quit":
-                        continueLoop = true;
+                        continueLoop = false;
                         break;
                     default:
                         System.out.println("Incorrect option entered.");
@@ -341,7 +280,7 @@ public class Main extends IOController {
                     }
                     break;
                 case "fix missing":
-                    fixMissingRoles(project);
+                    ProjectFactory.fixMissingRoles(project);
                     break;
                 case "contractor":
                     // Falls through if user enters 'q' in submenu.
@@ -358,12 +297,6 @@ public class Main extends IOController {
                 continue;
             }
         } 
-    }
-
-    public static void fixMissingRoles(Project project) {
-        for (String role: project.getMissingRoles()) {
-            project.setPerson(role, createPerson(role));
-        }
     }
 
     /**
@@ -409,103 +342,6 @@ public class Main extends IOController {
     }
 
     /**
-     * Creates a new {@link Entities.Project} object using {@link Factories.EntityFactory#addProject(String, int, String, String, double, double, String)}.
-     * 
-     * @param projectName the name of the project
-     * @param projectType the type of the project
-     * @return the project with {@code name == projectName}
-     * @throws NoSuchElementException
-     */
-    private static Project createProject(String projectName, String projectType) throws NoSuchElementException {
-        int erfNumber;
-        String projectAddress,
-                dateFinalized = "-";
-        double projectCost, amountPaid;
-        while (true) {
-            Project thisProject = getProjectByName(projectName);
-            if (thisProject != null) {
-                /*
-                 * Since project names ought to be unique, if the name matches
-                 * then return the project with that name.
-                 */
-                System.out.println("A project with the name '" + projectName + "' already exists.");
-                return thisProject;
-            }
-            try {
-                erfNumber = Input.expect("Project ERF Number").toInteger();
-                projectAddress = Input.expect("Project address").toString();
-                projectCost = Input.expect("Project Cost").toDouble();
-                amountPaid = Input.expect("Amount paid").toDouble();
-            } catch (IllegalStateException error) {
-                // Just cancel the operation if a required field is skipped.
-                System.out.println(error.getLocalizedMessage());
-                continue;
-            } catch (NumberFormatException error) {
-                System.out.println(error.getLocalizedMessage());
-                continue;
-            }
-            break;
-        }
-        return EntityFactory.addProject(projectName, erfNumber, projectType, projectAddress, projectCost,
-                amountPaid, dateFinalized);
-
-    }
-
-    /**
-     * Creates a new {@link Entities.Person} object using {@link Factories.EntityFactory#addPerson(int, String, String, String, String)}.
-     * 
-     * @param role the role of the person in the project.
-     * @return the person created.
-     * @throws NoSuchElementException
-     */
-    private static Person createPerson(String role) throws NoSuchElementException {
-        System.out.println("Setting details for " + role + ": ");
-        String firstName = null,
-                lastName = null,
-                physicalAddress = null,
-                emailAddress = null;
-        Integer phoneNumber = null;
-        Person thisPerson;
-        while (true) {
-            try {
-                if (phoneNumber == null)
-                    phoneNumber = Input.expect("Phone number").toInteger(9);
-                thisPerson = getPerson(phoneNumber);
-                /*
-                 * Since phone numbers are unique, return a person if there is a
-                 * phone number that matches.
-                 */
-                if (thisPerson != null) {
-                        Input.query(String.format(REUSE_PERSON_MESSAGE, thisPerson.getName()));
-                    if (Input.getInstance().toBoolean()) {
-                        return thisPerson;
-                    } else {
-                        phoneNumber = null;
-                    }
-                    continue;
-                }
-                if (firstName == null || firstName == "")
-                    firstName = Input.expect("First name").toString();
-                if (lastName == null || lastName == "")
-                    lastName = Input.expect("Last name").toString();
-                if (physicalAddress == null || physicalAddress == "")
-                    physicalAddress = Input.expect("Physical address").toString();
-                if (emailAddress == null || emailAddress == "")
-                    emailAddress = Input.expect("Email address").toString();
-                return EntityFactory.addPerson(phoneNumber, firstName, lastName, physicalAddress, emailAddress);
-            } catch (NumberFormatException error) {
-                System.out.println("A number is expected here.");
-            } catch (IllegalArgumentException error) {
-                System.out.print(error.getLocalizedMessage());
-                System.out.println("(with optional leading zero)");
-            } catch (IllegalStateException error) {
-                System.out.println(error.getLocalizedMessage());
-                continue;
-            }
-        }
-    }
-
-    /**
      * Safely sets the due date for a Project.
      * 
      * @param project
@@ -535,32 +371,5 @@ public class Main extends IOController {
             }
         }
         return dueDate.toString();
-    }
-
-    /**
-     * Lists all projects in with {@code project.getStatus() == completionStatus},
-     * or all projects if {@code completionStatus ==null}.
-     * 
-     * @param completionStatus the completion status to match.
-     */
-    private static void listProjects(Project.COMPLETION_STATUS completionStatus) {
-        ArrayList<Project> projectList = EntityFactory.getProjects();
-        if (projectList.size() > 0) {
-            ProjectOverview overview;
-            Project currentProject;
-            for (int projectNumber = 0; projectNumber < projectList.size(); projectNumber++) {
-                currentProject = getProjectById(projectNumber);
-                if (completionStatus == null || completionStatus == currentProject.getStatus()) {
-                    overview = new ProjectOverview(projectNumber, currentProject);
-                    System.out.println(overview.toString());
-                }
-            }
-        } else {
-            System.out.println("No projects have been saved.");
-        }
-    }
-
-    private static void listProjects() {
-        listProjects(null);
     }
 }
