@@ -17,7 +17,9 @@ import IO.IOController;
 import IO.Input;
 import IO.Output;
 
-
+/**
+ * Represents a ProjectOverview
+ */
 class ProjectOverview {
     private static final String OVERVIEW_FORMAT = """
             project number:             %-8d
@@ -26,12 +28,22 @@ class ProjectOverview {
             total paid to date:         R%.2f
             customer name:              %-8s
             customer contact number:    %-8s
+            contractor name:            %-8s
+            contractor contact number:  %-8s
+            architect name:             %-8s
+            architect contact number:   %-8s
             completion status:          %-8s
             date finalized:             %-8s
             """;
     private int projectNumber;
     private Project project;
 
+    /**
+     * Creates a ProjectOverview object.
+     * 
+     * @param projectNumber the project number to assign to {@link #project}
+     * @param project the project to present an overview of.
+     */
     public ProjectOverview(int projectNumber, Project project) {
         this.project = project;
         this.projectNumber = projectNumber;
@@ -44,6 +56,8 @@ class ProjectOverview {
             dateFinalized = project.getDateFinalized();
         }
         Person customer = project.getPerson("Customer");
+        Person contractor = project.getPerson("Contractor");
+        Person architect = project.getPerson("Customer");
         return new StringBuilder()
                 .append("-")
                 .append("\n")
@@ -52,8 +66,12 @@ class ProjectOverview {
                     project.getName(),
                     project.getCost(),
                     project.getPaid(),
-                    customer.getName(),
-                    customer.getPhoneNumber(),
+                    customer == null ? "n/a" : customer.getName(),
+                    customer == null ? "n/a" : customer.getPhoneNumber(),
+                    contractor == null ? "n/a" : contractor.getName(),
+                    contractor == null ? "n/a" : contractor.getPhoneNumber(),
+                    architect == null ? "n/a" : architect.getName(),
+                    architect == null ? "n/a" : architect.getPhoneNumber(),
                     status.label,
                     dateFinalized
                     ))
@@ -69,6 +87,8 @@ public class Main extends IOController {
     private static final Menu MAIN_MENU = new Menu("Project") {
         {
             put("list", "List all projects");
+            put("list -i", "List incomplete projects");
+            put("list -o", "List outstanding projects");
             put("create", "Create new project");
             put("select", "Select a project");
             put("quit", "Quit application");
@@ -80,6 +100,7 @@ public class Main extends IOController {
             put("due", "Change due date");
             put("paid", "Change amount paid");
             put("contractor", "Change a contractor's details");
+            put("fix missing", "Enter details for missing participants");
             put("finalize", "Finalize the project");
             put("back", "Back to Main Menu");
             put("quit", "Quit application");
@@ -139,7 +160,7 @@ public class Main extends IOController {
             EntityModel.unparseProjects(EntityFactory.getProjects());
         } catch (IOException error) {
             System.out.println("Something went wrong while trying to save people.");
-            System.out.println(error);
+            System.out.println(error.getLocalizedMessage());
         }
     }
 
@@ -150,6 +171,7 @@ public class Main extends IOController {
      * @param dataSource
      */
     private static void loadProjects(DataSource dataSource) {
+        int line = 0;
         String nextLine;
         Project currentProject;
         do {
@@ -157,10 +179,18 @@ public class Main extends IOController {
             if (nextLine == null) {
                 break;
             }
-            currentProject = EntityModel.parseProject(nextLine);
-            if (currentProject != null) {
-                EntityFactory.addProject(currentProject);
-            }
+            try {
+                currentProject = EntityModel.parseProject(nextLine);
+                if (currentProject != null) {
+                    EntityFactory.addProject(currentProject);
+                }
+            } catch(IndexOutOfBoundsException error) {
+                System.out.printf("%s (line %d)\n", error, line);
+            } 
+            // catch(NumberFormatException error) {
+            //     System.out.printf("%s (line %d)\n", error, line);
+            // }
+            line++;
         } while (true);
     }
 
@@ -172,13 +202,22 @@ public class Main extends IOController {
      */
     private static void loadPeople(DataSource dataSource) {
         String nextLine;
+        int line = 0;
         Person currentPerson;
         do {
             nextLine = dataSource.readLine();
-            currentPerson = EntityModel.parsePerson(nextLine);
-            if (currentPerson != null) {
-                EntityFactory.assignPerson(currentPerson);
+            try {
+                currentPerson = EntityModel.parsePerson(nextLine);
+                if (currentPerson != null) {
+                    EntityFactory.assignPerson(currentPerson);
+                }
+            } catch(IndexOutOfBoundsException error) {
+                System.out.printf("%s (line %d)\n", error, line);
+            } catch(NumberFormatException error) {
+                System.out.printf("%s (line %d)\n", error, line);
             }
+
+            line++;
         } while (nextLine != null);
     }
 
@@ -192,16 +231,14 @@ public class Main extends IOController {
         String selectedOption;
         Project selectedProject = null;
         // Used to propagate a "quit" selection in sub menus.
-        boolean shouldQuit = false;
-        while (true) {
-            if (shouldQuit) {
-                break;
-            }
+        boolean continueLoop = true;
+        while (continueLoop) {
             try {
                 if (selectedProject != null) {
                     // Show a Project-specific menu if a project has been selected.
-                    shouldQuit = projectMenuLoop(selectedProject);
+                    continueLoop = projectMenuLoop(selectedProject);
                     selectedProject = null;
+                    continue;
                 } else {
                     System.out.println(MAIN_MENU);
                 }
@@ -220,38 +257,41 @@ public class Main extends IOController {
                         // List an overview for each project if any exist.
                         listProjects();
                         break;
+                    case "list -i":
+                        // List an overview for each project if any exist.
+                        listProjects(Project.COMPLETION_STATUS.IN_PROGRESS);
+                        break;
+                    case "list -o":
+                        // List an overview for each project if any exist.
+                        listProjects(Project.COMPLETION_STATUS.OUTSTANDING);
+                        break;
                     case "create":
                         // Create people first so that a default name can be set on creation.
-                        Person customer = createPerson("customer"),
+                        Person customer = createPerson("Customer"),
                                 contractor,
                                 architect;
-                        Project project;
                         String projectName = Input.query("Project name").toString();
                         String projectType = Input.expect("Project Type").toString();
+                        // default to "{Customer Last name} {Project type}" if no project name is provided.
                         if (projectName == "") {
-                            project = createProject(projectType + " " + customer.getLastName(), projectType);
+                            selectedProject = createProject(projectType + " " + customer.getLastName(), projectType);
                         } else {
-                            project = createProject(projectName, projectType);
+                            selectedProject = createProject(projectName, projectType);
                         }
-                        if (project.getPerson("Customer") == null) {
-                            project.set("Customer", customer);
+                        if (selectedProject.getPerson("Customer") == null) {
+                            selectedProject.setPerson("Customer", customer);
                         }
-                        if (project.getPerson("Architect") == null) {
-                            architect = createPerson("contractor");
-                            project.set("Architect", architect);
+                        if (selectedProject.getPerson("Architect") == null) {
+                            architect = createPerson("Contractor");
+                            selectedProject.setPerson("Architect", architect);
                         }
-                        if (project.getPerson("Contractor") == null) {
-                            contractor = createPerson("architect");
-                            project.set("Contractor", contractor);
+                        if (selectedProject.getPerson("Contractor") == null) {
+                            contractor = createPerson("Architect");
+                            selectedProject.setPerson("Contractor", contractor);
                         }
-                        // default to "{Customer Last name} {Project type}" if no project name is given
-    
-                        // Use the result of projectMenuLoop to decide if mainMenuLoop should end as
-                        // well.
-                        shouldQuit = projectMenuLoop(project);
                         break;
                     case "quit":
-                        shouldQuit = true;
+                        continueLoop = true;
                         break;
                     default:
                         System.out.println("Incorrect option entered.");
@@ -273,9 +313,9 @@ public class Main extends IOController {
      */
     private static boolean projectMenuLoop(Project project) {
         String selected;
+        System.out.println(project);
         while (true) {
             // Show the project's details and then the menu.
-            System.out.println(project);
             System.out.println(PROJECT_MENU);
             try {
                 selected = Input.expect("").toString();
@@ -289,22 +329,27 @@ public class Main extends IOController {
                     break;
                 case "finalize":
                     // Finalize the project if all details are set, otherwise print an invoice.
-                    project.markFinalized();
+                    try {
+                        project.markFinalized();
+                    } catch(IllegalStateException error) {
+                        System.out.println(error.getLocalizedMessage());
+                    }
                     if (project.getStatus() != Project.COMPLETION_STATUS.FINALIZED) {
                         System.out.println(project.getInvoice());
                     } else {
                         System.out.println("The project was finalized on " + project.getDateFinalized());
                     }
                     break;
+                case "fix missing":
+                    fixMissingRoles(project);
+                    break;
                 case "contractor":
                     // Falls through if user enters 'q' in submenu.
-                    if (personnelMenuLoop(project.getPerson("contractor"))) {
-                        return true;
-                    }
+                    return (personnelMenuLoop(project.getPerson("contractor")));
                 case "quit":
-                    return true;
-                case "back":
                     return false;
+                case "back":
+                    return true;
                 default:
                     System.out.println("Incorrect option entered.");
             }
@@ -313,6 +358,12 @@ public class Main extends IOController {
                 continue;
             }
         } 
+    }
+
+    public static void fixMissingRoles(Project project) {
+        for (String role: project.getMissingRoles()) {
+            project.setPerson(role, createPerson(role));
+        }
     }
 
     /**
@@ -348,9 +399,9 @@ public class Main extends IOController {
                     }
                     break;
                 case "back":
-                    return false;
-                case "quit":
                     return true;
+                case "quit":
+                    return false;
                 default:
                     System.out.println("Incorrect option entered.");
             }
@@ -486,16 +537,30 @@ public class Main extends IOController {
         return dueDate.toString();
     }
 
-    private static void listProjects() {
+    /**
+     * Lists all projects in with {@code project.getStatus() == completionStatus},
+     * or all projects if {@code completionStatus ==null}.
+     * 
+     * @param completionStatus the completion status to match.
+     */
+    private static void listProjects(Project.COMPLETION_STATUS completionStatus) {
         ArrayList<Project> projectList = EntityFactory.getProjects();
         if (projectList.size() > 0) {
             ProjectOverview overview;
+            Project currentProject;
             for (int projectNumber = 0; projectNumber < projectList.size(); projectNumber++) {
-                overview = new ProjectOverview(projectNumber, getProjectById(projectNumber));
-                System.out.println(overview.toString());
+                currentProject = getProjectById(projectNumber);
+                if (completionStatus == null || completionStatus == currentProject.getStatus()) {
+                    overview = new ProjectOverview(projectNumber, currentProject);
+                    System.out.println(overview.toString());
+                }
             }
         } else {
             System.out.println("No projects have been saved.");
         }
+    }
+
+    private static void listProjects() {
+        listProjects(null);
     }
 }

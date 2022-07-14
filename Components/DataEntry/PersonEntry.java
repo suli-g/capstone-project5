@@ -12,9 +12,9 @@ public class PersonEntry extends EntityEntryBuilder {
      * @param person the person object to parse.
      * @return a {@link String} representing {@value person}
      */
+
     public static String unparse(Person person) {
-        return entryString
-                .append(person.getFirstName())
+        return getInstance().append(person.getFirstName())
                 .append(person.getLastName())
                 .append(person.getAddress())
                 .append(person.getEmailAddress())
@@ -32,7 +32,7 @@ public class PersonEntry extends EntityEntryBuilder {
      */
     public static Person parse(String data) throws NumberFormatException, IndexOutOfBoundsException {
         String[] entry = data.split(VALUE_DELIMITER);
-        if (entry.length > 5) {
+        if (entry.length != 5) {
             throw new IndexOutOfBoundsException("The entry data should have exactly 5 values.");
         }
         return new Person(entry[0], entry[1], entry[2], entry[3], Integer.parseInt(entry[4]));

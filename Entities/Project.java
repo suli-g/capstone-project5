@@ -17,7 +17,7 @@ public class Project extends Entity {
     public enum COMPLETION_STATUS {
         IN_PROGRESS("IN PROGRESS"),
         FINALIZED("FINALIZED"),
-        OVERDUE("OVERDUE");
+        OUTSTANDING("OVERDUE");
 
         public final String label;
 
@@ -27,7 +27,6 @@ public class Project extends Entity {
     }
 
     private static List<String> requiredRoles;
-    private ArrayList<String> missingRoles;
     private HashMap<String, Person> participants;
     private double cost = 0,
             paid = 0;
@@ -47,13 +46,6 @@ public class Project extends Entity {
         super(projectName, projectAddress, buildingType, erfNumber);
         cost = projectCost;
         participants = new HashMap<>();
-        this.missingRoles = new ArrayList<>() {
-            {
-                for (String role : getRequiredRoles()) {
-                    add(role);
-                }
-            }
-        };
     }
 
     /**
@@ -68,19 +60,19 @@ public class Project extends Entity {
         return participants.get(role);
     }
 
+    public List<String> getMissingRoles() {
+        return requiredRoles.stream().filter(role -> participants.get(role) == null).toList();
+    }
     /**
      * @param role the role to associate with {@code person}.
      * @param person the person to associate with {@code role}, or null to add {@code role} to {@link #requiredRoles}.
      * @return this Project.
      * @throws IllegalArgumentException if {@code role} is not in {@link #requiredRoles}.
      */
-    public Project set(String role, Person person) throws IllegalArgumentException {
+    public Project setPerson(String role, Person person) throws IllegalArgumentException {
         if (!requiredRoles.contains(role)) {
             throw new IllegalArgumentException("The role '" + role + "' is not a valid project role.");
-        } if (person == null) {
-            missingRoles.add(role);
         }
-        missingRoles.remove(role);
         participants.put(role, person);
         return this;
     }
@@ -172,9 +164,10 @@ public class Project extends Entity {
      * 
      * @return the finalization status of the project.
      */
-    public Project markFinalized(String finalizationDate) throws DateTimeParseException {
-        if (missingRoles.size() == 0 && cost == paid) {
-            if (finalizationDate == "-") {
+    public Project markFinalized(String finalizationDate) throws DateTimeParseException, IllegalStateException {
+        List<String> missingRoles = getMissingRoles();
+        if (missingRoles.size() == 0 && cost <= paid) {
+            if (finalizationDate != "-") {
                 this.dateFinalized = LocalDate.now().toString();
             }
             this.dateFinalized = LocalDate.parse(finalizationDate).toString();
@@ -194,7 +187,7 @@ public class Project extends Entity {
         if (dateFinalized != null) {
             return COMPLETION_STATUS.FINALIZED;
         } else if (dueDate != null && LocalDate.parse(dueDate).isBefore(LocalDate.now())) {
-            return COMPLETION_STATUS.OVERDUE;
+            return COMPLETION_STATUS.OUTSTANDING;
         }
         return COMPLETION_STATUS.IN_PROGRESS;
     }

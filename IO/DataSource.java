@@ -49,7 +49,7 @@ public class DataSource {
      */
     public boolean write(String text) {
         try {
-            FileWriter writer = new FileWriter(sourcePath.toFile());
+            FileWriter writer = new FileWriter(sourcePath.toFile(), false);
             writer.write(text);
             writer.close();
             return true;

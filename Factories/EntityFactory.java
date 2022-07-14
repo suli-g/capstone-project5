@@ -20,9 +20,12 @@ public class EntityFactory {
      */
     public static Project addProject(String projectName, int erfNumber, String projectType, String projectAddress,
             double projectCost, double amountPaid, String dateFinalized) {
-        Project project = new Project(projectName, projectAddress, projectType, erfNumber, projectCost)
-                .setPaid(amountPaid)
-                .markFinalized(dateFinalized);
+                Project project;
+                project = new Project(projectName, projectAddress, projectType, erfNumber, projectCost)
+                       .setPaid(amountPaid);
+        try {
+            project.markFinalized(dateFinalized);
+        } catch(IllegalStateException ignore){}
 
         return addProject(project);
     }
@@ -89,7 +92,11 @@ public class EntityFactory {
      * @return the project object.
      */
     public static Project getProjectByName(String projectName) {
-        return projects.get(projectNames.indexOf(projectName));
+        int projectIndex = projectNames.indexOf(projectName);
+        if (projectIndex == -1) {
+            return null;
+        }
+        return projects.get(projectIndex);
     }
 
     /**

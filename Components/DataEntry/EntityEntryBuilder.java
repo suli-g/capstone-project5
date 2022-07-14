@@ -1,27 +1,33 @@
 package Components.DataEntry;
 
 /**
- * Represents an EntityDataEntry
+ * Represents an EntityEntryBuilder
  */
 public class EntityEntryBuilder implements DelimitedValueString {
-    protected static StringBuilder entryString;
-
-    /**
-     * Initializes {@link #entryString}.
-     */
-    public EntityEntryBuilder() {
-        entryString = new StringBuilder();
+    private StringBuilder entryBuilder;
+    private static EntityEntryBuilder builderInstance;
+    protected EntityEntryBuilder(){
+        entryBuilder = new StringBuilder();
     }
 
+    public static EntityEntryBuilder getInstance() {
+        if (builderInstance == null) {
+            builderInstance = new EntityEntryBuilder();
+        }
+        return builderInstance;
+    }
     /**
-     * Appends {@code data} to {@link #entryString} along with {@link #VALUE_DELIMITER}.
+     * Appends {@code data} to {@link #entryBuilder} along with {@link #VALUE_DELIMITER}.
      * 
      * @param object the to be appended as a {@link String}.
      * @return this EntityDataBuilder.
      */
     public EntityEntryBuilder append(Object object) {
-        entryString.append(object).append(VALUE_DELIMITER);
-        return this;
+        if (entryBuilder == null) {
+            entryBuilder = new StringBuilder();
+        }
+        entryBuilder.append(object).append(VALUE_DELIMITER);
+        return builderInstance;
     }
 
     /**
@@ -29,6 +35,8 @@ public class EntityEntryBuilder implements DelimitedValueString {
      */
     @Override
     public String toString() {
-        return entryString.toString();
+        String value = entryBuilder.toString();
+        entryBuilder = null;
+        return value;
     }
 }

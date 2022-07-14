@@ -1,11 +1,12 @@
 package Components;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * Represents a Menu.
  */
-public class Menu extends HashMap<String, String> {
+public class Menu extends LinkedHashMap<String, String> {
     private static HashMap<String, Menu> menuInstances;
     private static String borderMarker = "-";
     private String title;

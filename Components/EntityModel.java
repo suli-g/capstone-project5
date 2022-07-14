@@ -61,19 +61,11 @@ public class EntityModel implements DelimitedValueString {
      * 
      * @param data
      * @return a {@link Entities.Project} object
-     * @throws IllegalArgumentException if the {@code data} is malformed.
+     * @throws NumberFormatException if a number in {@code data} is incorrectly formatted.
      * @throws IndexOutOfBoundsException if the amount of delimited values in {@value data} is less than required.
      */
-    public static Project parseProject(String data) throws IllegalArgumentException, IndexOutOfBoundsException {
-        try {
-            return ProjectEntry.parse(data);
-        } catch(NumberFormatException error) {
-            throw new IllegalArgumentException("The data is malformed.");
-        }
-        catch (Exception error) {
-            System.out.println(error);
-            return null;
-        } 
+    public static Project parseProject(String data) throws NumberFormatException, IndexOutOfBoundsException {
+        return ProjectEntry.parse(data);
     }
 
     /**
@@ -85,12 +77,14 @@ public class EntityModel implements DelimitedValueString {
      */
     public static void unparseProjects(ArrayList<Project> projectList) throws IOException {
         int entryAmount = projectList.size();
+        System.out.println(projectList);
         if (entryAmount > 0) {
             StringBuilder data = new StringBuilder();
             int projectNumber = 0;
             for (Project project : projectList) {
-                data.append(ProjectEntry.unparse(projectNumber++, project))
+                data.append(ProjectEntry.unparse(projectNumber, project))
                         .append(System.lineSeparator());
+                projectNumber++;
             }
             projectDataSource.write(data.toString());
         }
@@ -101,18 +95,14 @@ public class EntityModel implements DelimitedValueString {
      * 
      * @param data the {@code String} to be parsed.
      * @return a new {@link Entities.Person} object
-     * @throws IllegalArgumentException if {@code data} is malformed.
+     * @throws NumberFormatException if a number {@code data} cannot be parsed.
      * @throws IndexOutOfBoundsException if the amount of delimited values in {@value data} is less than required.
      */
     public static Person parsePerson(String data) throws IllegalArgumentException, IndexOutOfBoundsException {
-        try {
-            if (data == null) {
-                return null;
-            }
-            return PersonEntry.parse(data);
-        } catch(NumberFormatException error) {
-            throw new IllegalArgumentException("The data is malformed.");
+        if (data == null) {
+            return null;
         }
+        return PersonEntry.parse(data);
     }
 
     /**
@@ -129,7 +119,6 @@ public class EntityModel implements DelimitedValueString {
                 data.append(PersonEntry.unparse(person))
                         .append(System.lineSeparator());
             }
-            data.deleteCharAt(data.length() - 1);
             peopleDataSource.write(data.toString());
         }
     }
