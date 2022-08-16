@@ -9,15 +9,17 @@ import java.util.LinkedHashMap;
 public class Menu extends LinkedHashMap<String, String> {
     private static HashMap<String, Menu> menuInstances;
     private static String borderMarker = "-";
-    private String title;
+    /**
+     * The name of this Menu instance.
+     */
+    private String name;
     /**
      * Creates a menu with the given name and options.
      * 
-     * @param menuName the name of the menu.
-     * @param menuOptionDescriptions a map of options and their descriptions.
+     * @param menuName the name of the menu instance.
      */
     public Menu(String menuName) {
-        title = menuName;
+        name = menuName;
     }
     
     /**
@@ -43,12 +45,12 @@ public class Menu extends LinkedHashMap<String, String> {
      */
     @Override
     public String toString() {
-        int titleLength = title.length() + 6;
+        int titleLength = name.length() + 6;
         // Align the borders with title
         String optionFormat = "\n%-"+ titleLength + "s%-16s";
         StringBuilder menuDescription = new StringBuilder(borderMarker.repeat(titleLength))
             .append('\n')
-            .append(title)
+            .append(name)
             .append(" Menu:");
             this.forEach((option, description) -> {
                 menuDescription

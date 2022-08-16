@@ -14,9 +14,16 @@ public class EntityFactory {
     private static HashMap<Integer, Person> people = new HashMap<>();
 
     /**
-     * Prompts the user for project details, then creates and stores Project object.
+     * Creates a {@link Project} using the given project details.
      * 
-     * @return the created project
+     * @param projectName the name of the project.
+     * @param erfNumber the ERF number of the project.
+     * @param projectType the building type of the project.
+     * @param projectAddress the physical address of the project.
+     * @param projectCost the cost of the project.
+     * @param amountPaid the amount paid to date for the project.
+     * @param dateFinalized the date the project was finalized, or "-" if not yet finalized. 
+     * @return a new {@link Project} object.
      */
     public static Project addProject(String projectName, int erfNumber, String projectType, String projectAddress,
             double projectCost, double amountPaid, String dateFinalized) {
@@ -67,7 +74,7 @@ public class EntityFactory {
      * on that object.
      * 
      * @param person the assigned person
-     * @return
+     * @return the {@code person} param
      */
     public static Person assignPerson(Person person) {
         people.put(person.getNumber(), person);
@@ -102,8 +109,8 @@ public class EntityFactory {
     /**
      * Retrieves the {@link Entities.Project} with index {@code projectNumber} from {@link #projects}.
      * 
-     * @param projectNumber
-     * @return
+     * @param projectNumber the index of the project in {@link #projects}
+     * @return the retrieved {@link Project}, or null if {@code projectNumber} is out of range.
      */
     public static Project getProjectById(int projectNumber) {
         if (projectNumber >= projects.size()) {
@@ -113,14 +120,14 @@ public class EntityFactory {
     }
 
     /**
-     * @return {@link #projects}.
+     * @return this EntityFactory's project list.
      */
     public static ArrayList<Project> getProjects() {
         return projects;
     }
 
     /**
-     * @return {@link #people}.
+     * @return this EntityFactory's people list.
      */
     public static HashMap<Integer, Person> getPeople() {
         return people;

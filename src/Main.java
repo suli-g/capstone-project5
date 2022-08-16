@@ -198,11 +198,11 @@ public class Main extends IOController {
                         break;
                     case "list -i":
                         // List an overview for each project if any exist.
-                        ProjectFactory.list(Project.COMPLETION_STATUS.IN_PROGRESS);
+                        ProjectFactory.list(Project.PROJECT_STATUS_ENUM.IN_PROGRESS);
                         break;
                     case "list -o":
                         // List an overview for each project if any exist.
-                        ProjectFactory.list(Project.COMPLETION_STATUS.OUTSTANDING);
+                        ProjectFactory.list(Project.PROJECT_STATUS_ENUM.OUTSTANDING);
                         break;
                     case "create":
                         // Create people first so that a default name can be set on creation.
@@ -273,7 +273,7 @@ public class Main extends IOController {
                     } catch(IllegalStateException error) {
                         System.out.println(error.getLocalizedMessage());
                     }
-                    if (project.getStatus() != Project.COMPLETION_STATUS.FINALIZED) {
+                    if (project.getStatus() != Project.PROJECT_STATUS_ENUM.FINALIZED) {
                         System.out.println(project.getInvoice());
                     } else {
                         System.out.println("The project was finalized on " + project.getDateFinalized());

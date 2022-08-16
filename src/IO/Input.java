@@ -13,6 +13,9 @@ public class Input {
     private Input(){
     }
 
+    /**
+     * @param scanner the scanner to use as a source.
+     */
     public static void setSource(Scanner scanner) {
         source = scanner;
     }

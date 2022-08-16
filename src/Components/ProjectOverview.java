@@ -36,9 +36,9 @@ public class ProjectOverview {
     }
 
     public String toString() {
-        Project.COMPLETION_STATUS status = project.getStatus();
+        Project.PROJECT_STATUS_ENUM status = project.getStatus();
         String dateFinalized = "n/a";
-        if (status == Project.COMPLETION_STATUS.FINALIZED) {
+        if (status == Project.PROJECT_STATUS_ENUM.FINALIZED) {
             dateFinalized = project.getDateFinalized();
         }
         Person customer = project.getPerson("Customer");

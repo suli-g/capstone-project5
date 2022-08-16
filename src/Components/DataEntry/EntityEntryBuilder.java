@@ -10,6 +10,11 @@ public class EntityEntryBuilder implements DelimitedValueString {
         entryBuilder = new StringBuilder();
     }
 
+    /**
+     * Makes sure that the current Java application only has one EntityEntryBuilder instance.
+     * 
+     * @return the EntityEntryBuilder instance.
+     */
     public static EntityEntryBuilder getInstance() {
         if (builderInstance == null) {
             builderInstance = new EntityEntryBuilder();

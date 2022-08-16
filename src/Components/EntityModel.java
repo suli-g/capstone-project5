@@ -19,10 +19,10 @@ public class EntityModel implements DelimitedValueString {
     protected static DataSource peopleDataSource, projectDataSource;
 
     /**
-     * Instantiates an EntityModel as a singleton with 2 {@link IO.DataSource} objects.
+     * Instantiates an EntityModel as a singleton with 2 {@link DataSource} objects.
      * 
-     * @param projectSource the {@link IO.DataSource} for {@link Entities.Project} entities.
-     * @param peopleSource the {@link IO.DataSource} for {@link Entities.Person} entities.
+     * @param projectSource the {@link DataSource} for {@link Project} entities.
+     * @param peopleSource the {@link DataSource} for {@link Person} entities.
      */
     private EntityModel(DataSource projectSource, DataSource peopleSource) {
         projectDataSource = projectSource;
@@ -30,24 +30,13 @@ public class EntityModel implements DelimitedValueString {
     }
 
     /**
-     * @return the {@link IO.DataSource} that stores {@link Entities.People} information.
-     */
-    public static DataSource getPeopleSource() {
-        return peopleDataSource;
-    }
-
-    /**
-     * @return the {@link IO.DataSource} that stores {@link Entities.Project} information.
-     */
-    public static DataSource getProjectSource() {
-        return projectDataSource;
-    }
-
-    /**
+     * Returns the EntityModel instance associated with this Java application, or creates a new EntityModel
+     * and associates a {@link DataSource} to each {@link Person} and {@link Project} with the instantiated
+     * EntityModel if no EntityModel has been instantiated .
      * 
-     * @param projectSource the {@link IO.DataSource} to store {@link Entities.Project} information.
-     * @param peopleSource the {@link IO.DataSource} to store {@link Entities.Person} information.
-     * @return
+     * @param projectSource the {@link DataSource} to store {@link Project} information.
+     * @param peopleSource the {@link DataSource} to store {@link Person} information.
+     * @return the EntityModel associated with this Java application.
      */
     public static EntityModel getInstance(DataSource projectSource, DataSource peopleSource) {
         if (modelInstance == null) {
@@ -57,22 +46,36 @@ public class EntityModel implements DelimitedValueString {
     }
 
     /**
-     * Parses a {@code String} to a {@link Entities.Project} object using infromation in {@link #projectDataSource}.
+     * @return the {@link DataSource} that stores all {@link Person} information.
+     */
+    public static DataSource getPeopleSource() {
+        return peopleDataSource;
+    }
+
+    /**
+     * @return the {@link DataSource} that stores {@link Project} information.
+     */
+    public static DataSource getProjectSource() {
+        return projectDataSource;
+    }
+
+    /**
+     * Parses a {@code String} to a {@link Project} object using infromation in {@link #projectDataSource}.
      * 
-     * @param data
-     * @return a {@link Entities.Project} object
+     * @param data the string to parse.
+     * @return a {@link Project} object.
      * @throws NumberFormatException if a number in {@code data} is incorrectly formatted.
-     * @throws IndexOutOfBoundsException if the amount of delimited values in {@value data} is less than required.
+     * @throws IndexOutOfBoundsException if the amount of delimited values in {@code data} is less than required.
      */
     public static Project parseProject(String data) throws NumberFormatException, IndexOutOfBoundsException {
         return ProjectEntry.parse(data);
     }
 
     /**
-     * Converts {@link Entities.Project} objects stored in {@code projectList} into {@code String} values and writes
+     * Converts {@link Project} objects stored in {@code projectList} into {@code String} values and writes
      * them to {@link #projectDataSource}.
      * 
-     * @param projectList an ArrayList of {@link Entities.Project} objects.
+     * @param projectList an ArrayList of {@link Project} objects.
      * @throws IOException if {@link #projectDataSource} fails to write the data.
      */
     public static void unparseProjects(ArrayList<Project> projectList) throws IOException {
@@ -91,12 +94,12 @@ public class EntityModel implements DelimitedValueString {
     }
 
     /**
-     * Parses a {@code String} to a {@link Entities.Person} object using infromation in {@link #peopleDataSource}.
+     * Parses a {@code String} to a {@link Person} object using infromation in {@link #peopleDataSource}.
      * 
      * @param data the {@code String} to be parsed.
-     * @return a new {@link Entities.Person} object
+     * @return a new {@link Person} object.
      * @throws NumberFormatException if a number {@code data} cannot be parsed.
-     * @throws IndexOutOfBoundsException if the amount of delimited values in {@value data} is less than required.
+     * @throws IndexOutOfBoundsException if the amount of delimited values in {@code data} is less than required.
      */
     public static Person parsePerson(String data) throws IllegalArgumentException, IndexOutOfBoundsException {
         if (data == null) {
@@ -106,10 +109,10 @@ public class EntityModel implements DelimitedValueString {
     }
 
     /**
-     * Converts {@link Entities.Person} objects stored in {@code personMap} into {@code String} values and writes
+     * Converts {@link Person} objects stored in {@code personMap} into {@code String} values and writes
      * them to {@link #peopleDataSource}.
      * 
-     * @param peopleMap A mapping of phone numbers to {@link Entities.Person} objects.
+     * @param peopleMap A mapping of phone numbers to {@link Person} objects.
      * @throws IOException if {@link #peopleDataSource} fails to write the data.
      */
     public static void unparsePeople(HashMap<Integer, Person> peopleMap) throws IOException {

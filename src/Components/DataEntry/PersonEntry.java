@@ -7,10 +7,10 @@ import Entities.Person;
  */
 public class PersonEntry extends EntityEntryBuilder {
     /**
-     * Parses a {@link Entities.Person} object into a {@link String}.
+     * Parses a {@link Person} object into a {@link String}.
      * 
      * @param person the person object to parse.
-     * @return a {@link String} representing {@value person}
+     * @return a {@link String} representing a {@link Person}
      */
 
     public static String unparse(Person person) {
@@ -23,12 +23,12 @@ public class PersonEntry extends EntityEntryBuilder {
     }
 
     /**
-     * Parses a {@link String} array into a {@link Entities.Person} object.
+     * Parses a {@link String} array into a {@link Person} object.
      * 
-     * @param entry the array to parse.
+     * @param data the array to parse.
      * @return a Person object
      * @throws NumberFormatException if the phone number of the person cannot be parsed.
-     * @throws IndexOutOfBoundsException If {@code entry} does not have exactly 5 values.
+     * @throws IndexOutOfBoundsException If {@code data} does not have exactly 5 values.
      */
     public static Person parse(String data) throws NumberFormatException, IndexOutOfBoundsException {
         String[] entry = data.split(VALUE_DELIMITER);

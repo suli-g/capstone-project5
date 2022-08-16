@@ -1,8 +1,17 @@
 package IO;
 
 interface Console {
+    /**
+     * The maximum length to use for console messages
+     */
     int MAX_LENGTH = 80;
+    /**
+     * The character to use at nodes (corners) in the frame created.
+     */
     char NODE_CHAR = '+';
+    /**
+     * The character to use for edges (lines) in the frame created.
+     */
     char EDGE_CHAR = '-';
 }
 
@@ -16,9 +25,9 @@ public class Output implements Console {
     }
 
     /**
-     * Creates a new Output instance if no Output instance is in scope.
+     * Creates a new Output instance if no this Java application has created no Output instance yet.
      * 
-     * @return
+     * @return the Output instance.
      */
     public static Output getInstance() {
         if (displayInstance == null) {
@@ -54,6 +63,8 @@ public class Output implements Console {
 
     /**
      * Prints a header for the company.
+     * 
+     * @param companyName the name of the company.
      */
     public static void printHeader(String companyName) {
         String logoText = String.format("{ %s }", companyName),

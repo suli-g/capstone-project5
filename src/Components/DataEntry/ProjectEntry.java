@@ -9,10 +9,11 @@ import Factories.EntityFactory;
  */
 public class ProjectEntry extends EntityEntryBuilder {
     /**
-     * Parses a {@link Entities.Person} object into a {@link String}.
+     * Parses a {@link Person} object into a {@link String}.
      * 
-     * @param person the person object to parse.
-     * @return a {@link String} representing {@value person}
+     * @param projectNumber the number to associate with {@code project}.
+     * @param project the the project to parse to a {@link String}.
+     * @return a {@link String} representing {@code project}
      */
     public static String unparse(int projectNumber, Project project) {
         String finalizationDate = project.getDateFinalized();
@@ -35,10 +36,10 @@ public class ProjectEntry extends EntityEntryBuilder {
     }
 
     /**
-     * Parses a {@link String} into a {@link Entities.Project} object.
+     * Parses a {@link String} into a {@link Project} object.
      * 
      * @param data the array to parse.
-     * @return a {@link Entities.Project} object
+     * @return a {@link Project} object
      * @throws NumberFormatException     if the values meant to be numbers cannot be
      *                                   parsed as such.
      * @throws IndexOutOfBoundsException If {@code entry} does not have exactly 11

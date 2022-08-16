@@ -5,10 +5,6 @@ package Entities;
 public class Person extends Entity {
     private String lastName, firstName;
 
-    public String getFirstName() {
-        return firstName;
-    }
-
     /**
      * Person constructor.
      * 
@@ -65,6 +61,13 @@ public class Person extends Entity {
         // Add the missing first digit since all starting zeroes would have been removed
         // in the setter.
         return "0" + this.number;
+    }
+
+    /**
+     * @return this person's first name.
+     */
+    public String getFirstName() {
+        return firstName;
     }
 
     /**

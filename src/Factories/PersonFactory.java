@@ -1,6 +1,5 @@
 package Factories;
 
-import java.util.NoSuchElementException;
 
 import Entities.Person;
 import IO.Input;
@@ -12,14 +11,13 @@ public class PersonFactory {
     private static final String REUSE_PERSON_MESSAGE = "The information given matches some in the database. Use details for %s? (Y/n)";
 
     /**
-     * Creates a new {@link Entities.Person} object using
+     * Creates a new {@link Person} object using
      * {@link Factories.EntityFactory#addPerson(int, String, String, String, String)}.
      * 
      * @param role the role of the person in the project.
      * @return the person created.
-     * @throws NoSuchElementException
      */
-    public static Person create(String role) throws NoSuchElementException {
+    public static Person create(String role) {
         System.out.println("Setting details for " + role + ": ");
         String firstName = null,
                 lastName = null,

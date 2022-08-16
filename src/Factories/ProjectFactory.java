@@ -1,8 +1,6 @@
 package Factories;
 
 import java.util.ArrayList;
-import java.util.NoSuchElementException;
-
 import Components.ProjectOverview;
 import Entities.Project;
 import IO.Input;
@@ -12,15 +10,14 @@ import IO.Input;
  */
 public class ProjectFactory {
     /**
-     * Creates a new {@link Entities.Project} object using
+     * Creates a new {@link Project} object using
      * {@link Factories.EntityFactory#addProject(String, int, String, String, double, double, String)}.
      * 
      * @param projectName the name of the project
      * @param projectType the type of the project
      * @return the project with {@code name == projectName}
-     * @throws NoSuchElementException
      */
-    public static Project create(String projectName, String projectType) throws NoSuchElementException {
+    public static Project create(String projectName, String projectType) {
         int erfNumber;
         String projectAddress,
                 dateFinalized = "-";
@@ -61,7 +58,7 @@ public class ProjectFactory {
      * 
      * @param completionStatus the completion status to match.
      */
-    public static void list(Project.COMPLETION_STATUS completionStatus) {
+    public static void list(Project.PROJECT_STATUS_ENUM completionStatus) {
         ArrayList<Project> projectList = EntityFactory.getProjects();
         if (projectList.size() > 0) {
             ProjectOverview overview;
@@ -89,7 +86,7 @@ public class ProjectFactory {
      * Prompts the user to create a {@link Entities.Person} for all roles 
      * not currently associated with {@code project}.
      * 
-     * @param project
+     * @param project the project to check for missing roles.
      */
     public static void fixMissingRoles(Project project) {
         for (String role: project.getMissingRoles()) {
