@@ -4,11 +4,9 @@
  */
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import Components.EntityModel;
 import Components.Menu;
-import Components.ProjectOverview;
 import Entities.Person;
 import Entities.Project;
 import Factories.DataSourceFactory;
