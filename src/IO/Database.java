@@ -1,5 +1,7 @@
 package IO;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -23,6 +25,28 @@ public class Database {
         this.conn = connection.createStatement();
     }
 
+    /**
+     * Reads the properties stored in {@value #DB_PROPERTIES_FILE} if no arguments
+     * are supplied to the program on execution.
+     * 
+     * @param args The command line arguments.
+     * @return Properties containing the database configuration.
+     * @throws FileNotFoundException If the configuration file cannot be found.
+     * @throws IOException           If the configuration file cannot be accessed.
+     */
+    public static Database loadFromFile(InputStream configFileStream) throws IOException, SQLException {
+        Properties config = new Properties();
+        config.load(configFileStream);
+        return load(config);
+    }
+    /*
+     *             InputStream configFileStream;
+            if (args.length == 0) {
+                configFileStream = Main.class.getClassLoader().getResourceAsStream(DB_PROPERTIES_FILE);
+            } else {
+                configFileStream = new FileInputStream(args[0]);
+            }
+     */
     public static Database load(Properties dbConfig) throws NumberFormatException, SQLException{
         if (instance == null) {
             String portString = dbConfig.getProperty("db.port"),
