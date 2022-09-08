@@ -1,6 +1,6 @@
 package config;
 
-public interface UserInterface {
+public interface UserInterface extends Menus {
     /**
      * The maximum length to use for console messages
      */

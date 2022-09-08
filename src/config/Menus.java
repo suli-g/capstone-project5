@@ -1,9 +1,9 @@
 package config;
 
-import Components.Menu;
+import Components.Menu.Menu;
 
-public interface Menus {
-    Menu MAIN_MENU = new Menu("Main") {
+public interface Menus extends Config {
+    Menu MAIN_MENU = new Menu(MAIN_MENU_NAME) {
         {
             put("show", "show all projects");
             put("show -i", "show incomplete projects");
@@ -14,17 +14,17 @@ public interface Menus {
         }
     };
 
-    Menu PROJECT_MENU = new Menu("Project") {
+    Menu PROJECT_MENU = new Menu(PROJECT_MENU_NAME) {
         {
             put("due", "Change due date");
             put("paid", "Change amount paid");
             put("participants", "Show a list of participants in this project");
-            put("fix missing", "Enter details for missing participants");
+            put("fix", "Enter details for missing participants");
             put("finalize", "Finalize the project");
         }
     };
 
-    Menu PERSONNEL_MENU = new Menu("Personnel") {
+    Menu PERSONNEL_MENU = new Menu(PERSON_MENU_NAME) {
         {
             put("email", "Change Email Address");
             put("phone", "Change Phone Number");

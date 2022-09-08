@@ -54,10 +54,6 @@ public interface Queries {
         /**
          * Projects that are not finalized.
          */
-        COMPLETE("-c"),
-        /**
-         * Projects that are not finalized.
-         */
         INCOMPLETE("-i"),
         /**
          * Projects that are finalized.

@@ -1,4 +1,4 @@
-package IO;
+package Components;
 
 interface Console {
     /**

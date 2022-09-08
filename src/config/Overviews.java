@@ -20,15 +20,21 @@ public interface Overviews {
      * </dl>
      */
     String PROJECT_LIST_FORMAT = """
-            Project ID:             %-8d
-            Project Name:           %-8s
-            Project Type:           %-8s
-            Erf Number:             %-8d
-            Project Address:        %-8s
-            Total Cost:             %-8s
-            Total Paid:             %-7.2f
-            Date Due:               %-8s
-            Date Finalized:         %-8s
+            [PROJECT DETAILS]
+                Project Number:     %d
+                Project Name:       %s
+                Project Address:    %s
+                Project Type:       %s
+                ERF Number:         %d
+
+            [PROJECT ACCOUNT]
+                Amount Due:         R%.2f
+                Amount Paid:        R%.2f
+
+            [PROJECT PROGRESS]
+                Due Date:           %s
+                Date Finalized:     %s
+
             """,
             PERSON_OVERVIEW_FORMAT = """
                     ====%s

@@ -1,4 +1,4 @@
-package IO;
+package Components;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
