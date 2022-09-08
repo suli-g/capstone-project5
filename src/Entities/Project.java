@@ -2,66 +2,53 @@ package Entities;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import config.Overviews;
 
 /**
  * Represents a project
  */
-public class Project extends Entity {
-    /**
-     * Represents the completion status of this Project instance.
-     */
-    public enum PROJECT_STATUS_ENUM {
-        /**
-         * This Project has not been finalized.
-         */
-        IN_PROGRESS("IN PROGRESS"),
-        /**
-         * The details of this project are all in order.
-         */
-        FINALIZED("FINALIZED"),
-        /**
-         * The due date for this project has passed.
-         */
-        OUTSTANDING("OUTSTANDING");
-        /**
-         * The String representation for a PROJECT_STATUS_ENUM value.
-         */
-        public final String label;
-
-        private PROJECT_STATUS_ENUM(String label) {
-            this.label = label;
-        }
-    }
-
+public class Project extends Entity implements Overviews {
     private static List<String> requiredRoles;
     private HashMap<String, Person> participants;
     private double cost = 0,
             paid = 0;
+
+    public Project setCost(double cost) {
+        this.cost = cost;
+        return this;
+    }
+
+    public Project setCost(int cost) {
+        this.cost = cost / 100;
+        return this;
+    }
+
     private String dueDate,
             dateFinalized = null;
+    private int erfNumber;
 
     /**
      * Project constructor.
      * 
-     * @param projectName the name of this project.
+     * @param projectName    the name of this project.
      * @param projectAddress the address of this project.
-     * @param buildingType the type of building this project represents.
-     * @param erfNumber the ERF number of this project.
-     * @param projectCost the cost of this project.
+     * @param buildingType   the type of building this project represents.
+     * @param erfNumber      the ERF number of this project.
+     * @param projectCost    the cost of this project.
      */
-    public Project(String projectName, String projectAddress, String buildingType, int erfNumber, double projectCost) {
-        super(projectName, projectAddress, buildingType, erfNumber);
-        cost = projectCost;
+    public Project(int projectNumber, String projectName, String projectAddress, String buildingType) {
+        super(projectName, projectAddress, buildingType, projectNumber);
         participants = new HashMap<>();
     }
 
     /**
      * @param role the role of the {@link Entities.Person} to retrieve.
      * @return the {@link Entities.Person} associated with role, or null.
-     * @throws IllegalArgumentException if the role is not in {@link #requiredRoles}.
+     * @throws IllegalArgumentException if the role is not in
+     *                                  {@link #requiredRoles}.
      */
     public Person getPerson(String role) {
         if (!requiredRoles.contains(role)) {
@@ -76,11 +63,14 @@ public class Project extends Entity {
     public List<String> getMissingRoles() {
         return requiredRoles.stream().filter(role -> participants.get(role) == null).toList();
     }
+
     /**
-     * @param role the role to associate with {@code person}.
-     * @param person the person to associate with {@code role}, or null to add {@code role} to {@link #requiredRoles}.
+     * @param role   the role to associate with {@code person}.
+     * @param person the person to associate with {@code role}, or null to add
+     *               {@code role} to {@link #requiredRoles}.
      * @return this Project.
-     * @throws IllegalArgumentException if {@code role} is not in {@link #requiredRoles}.
+     * @throws IllegalArgumentException if {@code role} is not in
+     *                                  {@link #requiredRoles}.
      */
     public Project setPerson(String role, Person person) throws IllegalArgumentException {
         if (!requiredRoles.contains(role)) {
@@ -102,8 +92,8 @@ public class Project extends Entity {
      * 
      * @param roles the roles to be associated.
      */
-    public static void setRequiredRoles(String... roles) {
-        requiredRoles = Arrays.asList(roles);
+    public static void setRequiredRoles(List<String> roles) {
+        requiredRoles = roles;
     }
 
     /**
@@ -111,7 +101,8 @@ public class Project extends Entity {
      * 
      * @param date the due date as a string.
      * @return this Project
-     * @throws DateTimeParseException if {@code date} does not represent a valid date.
+     * @throws DateTimeParseException if {@code date} does not represent a valid
+     *                                date.
      */
     public Project setDueDate(String date) throws DateTimeParseException {
         // First validate the details of the new date before assigning it.
@@ -131,6 +122,11 @@ public class Project extends Entity {
      */
     public Project setPaid(double amount) {
         paid = amount;
+        return this;
+    }
+
+    public Project setPaid(int amount) {
+        paid = amount / 100;
         return this;
     }
 
@@ -159,7 +155,7 @@ public class Project extends Entity {
      * @return the date this project was finalized.
      */
     public String getDateFinalized() {
-        return dateFinalized;
+        return dateFinalized != null ? dateFinalized : "n/a";
     }
 
     /**
@@ -171,13 +167,24 @@ public class Project extends Entity {
         return this.markFinalized(LocalDate.now().toString());
     }
 
+    public int getErfNumber() {
+        return erfNumber;
+    }
+
+    public Project setErfNumber(int erfNumber) {
+        this.erfNumber = erfNumber;
+        return this;
+    }
+
     /**
      * Marks the project as finalized on {@code date} if all details are in order.
      * 
      * @param finalizationDate the date this project was finalized on.
      * @return the finalization status of the project.
-     * @throws DateTimeParseException if {@code finalizationDate} is not a valid date string.
-     * @throws IllegalStateException If this project connot be finalized (details missing).
+     * @throws DateTimeParseException if {@code finalizationDate} is not a valid
+     *                                date string.
+     * @throws IllegalStateException  If this project connot be finalized (details
+     *                                missing).
      */
     public Project markFinalized(String finalizationDate) throws DateTimeParseException, IllegalStateException {
         List<String> missingRoles = getMissingRoles();
@@ -196,60 +203,15 @@ public class Project extends Entity {
     }
 
     /**
-     * @return a {@link PROJECT_STATUS_ENUM} representing this project's finalization status.
-     */
-    public PROJECT_STATUS_ENUM getStatus() {
-        if (dateFinalized != null) {
-            return PROJECT_STATUS_ENUM.FINALIZED;
-        } else if (dueDate != null && LocalDate.parse(dueDate).isBefore(LocalDate.now())) {
-            return PROJECT_STATUS_ENUM.OUTSTANDING;
-        }
-        return PROJECT_STATUS_ENUM.IN_PROGRESS;
-    }
-
-    /**
-     * Gets an invoice for this project containing the customer and account details.
-     * 
-     * @return the project invoice.
-     */
-    public String getInvoice() {
-        StringBuilder invoiceBuilder = new StringBuilder();
-        Person participant;
-        for (String role : requiredRoles) {
-            participant = getPerson(role);
-            invoiceBuilder
-                    .append("[")
-                    .append(role)
-                    .append(" Details]\n")
-                    .append(participant == null ? "N/A" : participant)
-                    .append('\n');
-        }
-        invoiceBuilder.append("[Account Details]\n")
-                .append(String.format("""
-                        Total Cost:            R%.2f
-                        Total Paid:            R%.2f
-                        Outstanding Balance:   R%.2f\n
-                        """, cost, paid, cost - paid));
-        return invoiceBuilder
-                .toString();
-    }
-
-    /**
      * Stores this Project's details in a logical format.
      */
     @Override
     public String toString() {
-        String projectDetails = String.format("""
-                -
-                [PROJECT DETAILS]
-                Project Name:       %s
-                Project Address:    %s
-                Project Type:       %s
-                ERF Number:         %d
-                """, getName(), address, getType(), getNumber());
+
         return new StringBuilder()
-                .append(projectDetails)
-                .append(getInvoice())
+                .append(String.format(
+                        PROJECT_LIST_FORMAT, number, getName(), address, getType(), getErfNumber(),
+                        getCost(), getPaid(), getDueDate(), getDateFinalized()))
                 .append("-")
                 .toString();
     }
