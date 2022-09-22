@@ -3,8 +3,6 @@ package Model.EntityModel;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-
 import Components.QueryBuilder;
 
 public abstract class EntityQuerier extends QueryModel {
@@ -12,6 +10,12 @@ public abstract class EntityQuerier extends QueryModel {
         super(queryBuilder);
     }
 
+    
+    /** 
+     * @param status
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet getProjects(PROJECT_VIEW status) throws SQLException {
         String table = status.LABEL;
         PreparedStatement statement = queryBuilder.select(table, "*").prepare();
@@ -22,6 +26,13 @@ public abstract class EntityQuerier extends QueryModel {
         return results;
     }
 
+    
+    /** 
+     * @param phoneNumber
+     * @param erfNumber
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet verifyPerson(String phoneNumber, int erfNumber) throws SQLException {
         PreparedStatement query = queryBuilder
                 .select("person",
@@ -42,6 +53,12 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @param projectId
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet selectProject(int projectId) throws SQLException {
         PreparedStatement query = queryBuilder
                 .select("projects", "*")
@@ -55,6 +72,12 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @param projectNumber
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet getParticipants(int projectNumber) throws SQLException {
         PreparedStatement selection = queryBuilder
                 .select("participants", "*")
@@ -67,6 +90,11 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet loadTypes() throws SQLException {
         ResultSet results = queryBuilder.select("types_view", "relationship_type", "building_type")
                 .prepare().executeQuery();
@@ -77,6 +105,12 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @param phoneNumber
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet selectPerson(String phoneNumber) throws SQLException {
         PreparedStatement query = queryBuilder.select("people",
                 "person_id",
@@ -94,6 +128,12 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @param personId
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet selectPerson(int personId) throws SQLException {
         PreparedStatement query = queryBuilder.select("people",
                 "person_id",
@@ -111,6 +151,12 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
+    
+    /** 
+     * @param erfNumber
+     * @return ResultSet
+     * @throws SQLException
+     */
     public ResultSet getAddress(int erfNumber) throws SQLException {
         PreparedStatement query = queryBuilder.select("addresses", "full_address")
                 .where("erf_number").prepare();
