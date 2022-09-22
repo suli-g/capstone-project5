@@ -3,8 +3,7 @@ package Entities;
  * Represents a person.
  */
 public class Person extends Entity {
-    private String lastName, firstName;
-
+    private String lastName, firstName, phoneNumber;
     /**
      * Person constructor.
      * 
@@ -15,8 +14,8 @@ public class Person extends Entity {
      * @param phoneNumber     the phone number of this person (leading zeros
      *                        truncated).
      */
-    public Person(String firstName, String lastName, String physicalAddress, String emailAddress, int phoneNumber) {
-        super(firstName, physicalAddress, emailAddress, phoneNumber); // store the full name of this                                                       // person as the entity name.
+    public Person(int personId, String firstName, String lastName, String physicalAddress, String emailAddress) {
+        super(firstName, physicalAddress, emailAddress, personId); // store the full name of this                                                       // person as the entity name.
         this.lastName = lastName;
         this.firstName = firstName;
     }
@@ -34,8 +33,8 @@ public class Person extends Entity {
      * @param phoneNumber the new phone number of this person.
      * @return this person.
      */
-    public Person setPhoneNumber(int phoneNumber) {
-        number = phoneNumber;
+    public Person setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
         return this;
     }
 
@@ -43,7 +42,8 @@ public class Person extends Entity {
      * @return this person's address.
      */
     public String getAddress() {
-        return this.address;
+        return String.format(ADDRESS_OVERVIEW_FORMAT,
+        (Object[]) this.address.split(", "));
     }
 
     /**
@@ -58,9 +58,7 @@ public class Person extends Entity {
      * @return this person's number with a leading 0.
      */
     public String getPhoneNumber() {
-        // Add the missing first digit since all starting zeroes would have been removed
-        // in the setter.
-        return "0" + this.number;
+        return this.phoneNumber;
     }
 
     /**
@@ -84,16 +82,30 @@ public class Person extends Entity {
         return firstName + ' ' + lastName;
     }
 
+    
+    /** 
+     * @return the person ID of this person.
+     */
+    public int getNumber() {
+        return number;
+    }
+
+    
+    /** 
+     * @param number new personId for this person
+     * @return this Person object.
+     */
+    public Person setNumber(int number) {
+        this.number = number;
+        return this;
+    }
+
     /**
      * Stores this Person's details in a logical format.
      */
     @Override
     public String toString() {
-        return String.format("""
-                Name:               %s
-                Phone Number:       %s
-                Address:            %s
-                Email Address:      %s
-                \n""", getName(), getPhoneNumber(), getAddress(), getEmailAddress());
+        return String.format(
+            PERSON_OVERVIEW_FORMAT, firstName, lastName, type, phoneNumber, getAddress());
     }
 }

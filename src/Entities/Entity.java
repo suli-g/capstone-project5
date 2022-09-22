@@ -1,9 +1,12 @@
 package Entities;
+
+import Interfaces.Overviews;
+
 /**
  * Represents an Entity
  */
 
-public abstract class Entity {
+public abstract class Entity implements Overviews{
     protected String name;
     protected String address;
     protected String type;

@@ -1,7 +1,7 @@
 package Model.EntityModel;
 
 import Components.QueryBuilder;
-import Config.Queries;
+import Interfaces.Queries;
 
 public abstract class QueryModel implements Queries{
     protected QueryBuilder queryBuilder;

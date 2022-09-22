@@ -1,93 +1,109 @@
 package Components;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import Config.Queries;
-import Model.DatabaseModel;
+import Interfaces.Queries;
+import Model.DatabaseConnection;
 
-public class QueryBuilder implements Queries {
-    private String lastQueryString;
-    public String getLastQueryString() {
-        return lastQueryString;
-    }
-
-    public String setLastQueryString(String lastQueryString) {
-        query = new StringBuilder();
-        this.lastQueryString = lastQueryString;
-        return lastQueryString;
-    }
-
+/**
+ * Represents a QueryBuilder.
+ */
+public class QueryBuilder implements Queries { 
     private StringBuilder query;
+    
+    /** 
+     * Makes sure that {@link #query} is initialized as a {@link StringBuilder}
+     * 
+     * @return the {@code query} {@link StringBuilder}
+     */
     private StringBuilder getQuery() {
         if (query == null) {
             query = new StringBuilder();
+        } else {
+            query.append(" ");
         }
         return query;
     }
 
-    private static QueryBuilder builderInstance;
-
-    public static QueryBuilder getInstance(DatabaseModel dbInstance) {
-        if (builderInstance == null) {
-            builderInstance = new QueryBuilder(dbInstance);
-        }
-        return builderInstance;
-    }
-
-    private DatabaseModel dbInstance;
-
-    private QueryBuilder(DatabaseModel dbInstance) {
-        this.dbInstance = dbInstance;
-    }
-
-    public QueryBuilder columns(String...columnNames) {
-        assert query != null;
+    /** 
+     * Appends {@code items} - as a comma-separated list within parenthesis - to {@link #query}.
+     * 
+     * @param items the items to be grouped
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder group(String ...items) {
+        getQuery();
         query.append("(").append(
             String.join(
-                ",", Arrays.stream(columnNames)
+                ",", Arrays.stream(items)
                         .filter(name -> name != null).toList()))
         .append(") ");
         return this;
     }
 
-
+    /** 
+     * Appends a SQL "VALUES" clause to {@link #query}.
+     * 
+     * @param values
+     * @return this QueryBuilder instance
+     */
     public QueryBuilder values(String... values) {
-        assert query != null;
-        query.append(" VALUES (").append(String.join(",", values)).append(")");
-        return this;
-    }
-
-    public QueryBuilder values(int values) {
-        assert query != null;
-        String[] placeholders = new String[values];
-        Arrays.fill(placeholders, "?");
-        query.append(" VALUES (").append(String.join(",", placeholders)).append(")");
-        return this;
-    }
-
-    public QueryBuilder update(String[] tables) {
-        return update(String.join(",", tables));
-    }
-
-    public QueryBuilder insert(String intoTable) throws SQLException {
         getQuery();
-        query.append("INSERT INTO ").append(intoTable);
+        query.append("VALUES");
+        group(values);
         return this;
     }
 
+    /** 
+     * Calls {@link #values(String...)} with a an array of size {@code placeholderAmount} of placeholders for the resulting {@link PreparedStatement}, which this class uses.
+     * 
+     * @param placeholderAmount the amount of placeholders to produce
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder values(int placeholderAmount) {
+        getQuery();
+        String[] placeholders = new String[placeholderAmount];
+        Arrays.fill(placeholders, "?");
+        values(placeholders);
+        return this;
+    }
+
+    /** 
+     * Appends a SQL "INSERT INTO" clause to {@link #query} followed by {@code tableName}.
+     * 
+     * @param tableName the table name to append
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder insertInto(String tableName) {
+        getQuery();
+        query.append("INSERT INTO ").append(tableName);
+        return this;
+    }
+
+    /** 
+     * Appends "UPDATE {@code tableName}" to {@link #query}.
+     * 
+     * @param tableName the table to be updated
+     * @return this QueryBuilder instance
+     */
     public QueryBuilder update(String tableName) {
         getQuery();
         query.append("UPDATE ").append(tableName);
         return this;
     }
 
+    /** 
+     * Appends "SET " and "{@code columnName=?}" for each {@code columnName} in {@code columnNames} to {@link query}.
+     * 
+     * @param columnNames the columns to equate to placeholders
+     * @return this QueryBuilder instance
+     */
     public QueryBuilder set(String... columnNames) {
         getQuery();
         int columnAmount = columnNames.length;
-        query.append(" SET ");
+        query.append("SET ");
         for (int i = 0; i < columnAmount; i++) {
             query.append(columnNames[i]).append("=?");
             if (i < columnAmount - 1 ) {
@@ -97,50 +113,118 @@ public class QueryBuilder implements Queries {
         return this;
     }
 
-    public QueryBuilder join(JOIN_TYPE joinType, String tableName, String onColumnName, String onColumnValue) {
+    /** 
+     * Appends "{@link JOIN_TYPE} JOIN {@code tableName} ON {@code onColumnName = value}" to {@link #query}.
+     * 
+     * @param joinType the type of join to use
+     * @param tableName the table with which to join
+     * @param columnName the column whose value to check
+     * @param value the value the column should have
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder join(JOIN_TYPE joinType, String tableName, String columnName, String value) {
         getQuery();
         query.append(" ").append(joinType.getValue())
             .append(tableName)
                 .append(" ON ")
-                .append(onColumnName)
+                .append(columnName)
                 .append("=")
-                .append(onColumnValue);
+                .append(value);
         return this;
     }
 
-    public QueryBuilder select(String fromTable, String... columnNames) throws SQLException {
+    /** 
+     * Appends "SELECT ", followed by a comma-separated list of {@code columnName} for each columnName in {@code columnNames}, and
+     * "FROM {@tableName}" to {@link #query}.
+     *  
+     * @param tableName the table name to select from
+     * @param columnNames the columns to select
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder select(String tableName, String... columnNames) {
         getQuery();
-        query.append("SELECT ").append(String.join(",", columnNames)).append(" FROM ").append(fromTable);
+        query.append("SELECT ").append(String.join(",", columnNames)).append(" FROM ").append(tableName);
         return this;
     }
 
+    /** 
+     * Appends "WHERE {@code columnName}=?" to {@link #query}.
+     * 
+     * @param columnName the left hand side of the {@code =}
+     * @return this QueryBuilder instance
+     */
     public QueryBuilder where(String columnName) {
         getQuery();
         query.append(" WHERE ").append(columnName).append("=?");
         return this;
     }
 
-    public QueryBuilder and(String columnName) throws SQLException{
+    /** 
+     * Appends "AND {@code columnName}=?" to {@link #query}.
+     * 
+     * @param columnName the left hand side of the {@code =}
+     * @return this QueryBuilder instance
+     */
+    public QueryBuilder and(String columnName) {
         getQuery();
         query.append(" AND ").append(columnName).append("=?");
         return this;
     }
 
+    /** 
+     * Appends "OR {@code columnName}=?" to {@link #query}.
+     * 
+     * @param columnName the left hand side of the {@code =}
+     * @return this QueryBuilder instance
+     */
     public QueryBuilder or(String columnName) {
         getQuery();
         query.append(" OR ").append(columnName).append("=?");
         return this;
     }
 
+    
+    /** 
+     * Creates a {@link PreparedStatement} from {@link #query} as a {@link String} and reinitializes {@code query}.
+     * 
+     * @return the created {@link PreparedStatement}
+     * @throws SQLException
+     */
     public PreparedStatement prepare() throws SQLException {
         String statement = query.toString();
         query = null;
         return dbInstance.prepare(statement);
     }
 
+    private DatabaseConnection dbInstance;
+    private static QueryBuilder builderInstance;
+    /** 
+     * Creates a new QueryBuilder instance for this java application if no instance exists, or returns
+     * the current instance.
+     * 
+     * @param dbInstance the database model to use to prepare statements
+     * @return this application's QueryBuilder instance
+     */
+    public static QueryBuilder getInstance(DatabaseConnection dbInstance) {
+        if (builderInstance == null) {
+            builderInstance = new QueryBuilder(dbInstance);
+        }
+        return builderInstance;
+    }
+
+    /** 
+     * @return a string representation of {@link #query}.
+     */
     @Override
     public String toString() {
-        setLastQueryString(query.toString());
         return query.toString();
+    }
+
+    /**
+     * The constructor for this QueryBuilder instance.
+     * @param dbInstance
+     */
+    private QueryBuilder(DatabaseConnection dbInstance) {
+        this.dbInstance = dbInstance;
     }
 }

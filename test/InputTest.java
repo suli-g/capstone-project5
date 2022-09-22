@@ -31,11 +31,19 @@ public class InputTest {
         System.setOut(new PrintStream(testOut));
     }
 
+    
+    /** 
+     * @param data
+     */
     private void provideInput(String data) {
         testIn = new ByteArrayInputStream(data.getBytes());
         System.setIn(testIn);
     }
     
+    
+    /** 
+     * @return String
+     */
     private String getOutput() {
         return testOut.toString();
     }

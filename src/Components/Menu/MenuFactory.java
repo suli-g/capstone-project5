@@ -1,56 +1,125 @@
 package Components.Menu;
 
+import java.io.IOException;
+
+import Components.Input;
 import Components.ViewStack;
-import config.UserInterface;
+import Components.Menu.MenuException.InvalidSelectionException;
+import Interfaces.Menus;
 
-public class MenuFactory implements UserInterface {
-    public static class InvalidSelectionException extends IllegalArgumentException {
-        public InvalidSelectionException(String option) {
-            super(String.format("The option '%s' does not exist on this menu.", option));
+/**
+ * Controls the instantiation of {@link Menu} instances for this application.
+ */
+public class MenuFactory implements Menus {
+
+    /**
+     * @return {@value true} if the {@link #menuStack} is empty; {@value false}
+     *         otherwise.
+     */
+    public boolean isDone() {
+        return menuStack.empty();
+    }
+
+    /**
+     * Creates a new MenuFactory instance if no instance exists in this application;
+     * gets the instanceif an instance of MenuFactory already exists.
+     * 
+     * @return The single MenuFactory instance in this running application.
+     */
+    public static MenuFactory getInstance(ViewStack<Menu> menuStack) {
+        if (factoryInstance == null) {
+            factoryInstance = new MenuFactory(menuStack);
         }
+        return factoryInstance;
     }
 
-    private static ViewStack<Menu> stack;
+    /**
+     * The menu stack.
+     */
+    private ViewStack<Menu> menuStack;
 
-    public static void setStack(ViewStack<Menu> menuStack) {
-        stack = menuStack;
-    }
-
-    public static void addMenu(Menu menu) {
-        if (stack.size() > 1) {
+    /**
+     * Adds a menu to {@link #menuStack}.
+     * 
+     * @param menu to add.
+     */
+    public void addMenu(Menu menu) {
+        if (menuStack.size() > 0) {
             menu.put(BACK_COMMAND, BACK_COMMAND_DESCRIPTION);
         }
         menu.put(QUIT_COMMAND, QUIT_COMMAND_DESCRIPTION);
+        menuStack.push(menu);
     }
 
-    private static String borderMarker = "-";
+    private String borderMarker = "-";
 
-
-    public static void goBack() {
-        if (stack.size() > 1) {
-            stack.pop();
+    /**
+     * Removes the {@link Menu} at the top of the stack if the stack has more than
+     * one {@link Menu}.
+     */
+    public void popTop() {
+        if (menuStack.size() > 0) {
+            menuStack.pop();
         }
     }
 
-    public static void quit() {
-        stack.clear();
+    /**
+     * Clears {@link #menuStack}.
+     */
+    public void clearStack() {
+        menuStack.clear();
     }
 
-    public static Menu display() {
-        Menu currentMenu = stack.peek();
+    /**
+     * @return the {@link Menu} at the top of {@link #menuStack}.
+     */
+    public Menu getCurrent() {
+        return menuStack.peek();
+    }
+
+    /**
+     * Prints the current {@link Menu} to the console and uses
+     * {@link Input#expect(String)} to get a
+     * response from the user.
+     * 
+     * @throws IllegalStateException if no response is entered by the user.
+     * @return Menu
+     */
+    public Menu showCurrent() {
+        Menu currentMenu = menuStack.peek();
         String name = currentMenu.getName();
         int titleLength = name.length() + 6;
-        Option.setSize(titleLength);
-        StringBuilder menuOutline = new StringBuilder(borderMarker.repeat(titleLength))
-        .append('\n')
-        .append(name)
-        .append(" Menu:")
-        .append("\n")
-        .append(currentMenu)
-        .append("\n")
-        .append(borderMarker.repeat(titleLength))
-        .append("\n");
+        OptionDecorator.setSize(titleLength);
+        StringBuilder menuOutline = new StringBuilder()
+                .append('\n')
+                .append(name)
+                .append("\n")
+                .append(currentMenu)
+                .append("\n")
+                .append(borderMarker.repeat(titleLength))
+                .append("\n");
         System.out.println(menuOutline.toString());
+        try {
+            currentMenu.setSelected(Input.expect(">").toString().split("\s"));
+        } catch (IOException io) {
+            io.printStackTrace();
+        } catch (NullPointerException err) {
+            System.out.println("Data entry was interrupted unexpectedly.");
+        } catch (InvalidSelectionException err) {
+            System.out.println(err.getLocalizedMessage());
+        }
         return currentMenu;
-    }       
+    }
+
+    /**
+     * The MenuFactory instance in this application.
+     */
+    private static MenuFactory factoryInstance;
+
+    /**
+     * The constructor for this class.
+     */
+    private MenuFactory(ViewStack<Menu> menuStack) {
+        this.menuStack = menuStack;
+    }
 }
