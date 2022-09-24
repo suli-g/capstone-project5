@@ -1,5 +1,8 @@
 Components
-Components.DataEntry
+Components.Menu
+Controller
 Entities
-Factories
-IO
+Interfaces
+main
+Model
+Utilities

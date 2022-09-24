@@ -1,9 +1,12 @@
 package Entities;
+
+import Interfaces.EntityFormatter;
+
 /**
  * Represents an Entity
  */
 
-public abstract class Entity {
+public abstract class Entity implements EntityFormatter{
     protected String name;
     protected String address;
     protected String type;
