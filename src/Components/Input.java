@@ -2,7 +2,6 @@ package Components;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.NoSuchElementException;
 
 /**
  * Handles application input.
@@ -15,12 +14,12 @@ public class Input {
      * 
      * @param information The information to query for.
      * @return instance of this Input object.
-     * @throws NoSuchElementException if execution is terminated unexpectedly.
+     * @throws IOException if an I/O error occurs.
      */
     public static Input query(String information) throws IOException {
         System.out.print(information + "(optional): ");
         response = readInput();
-        return getInstance(source);
+        return getInstance(reader);
     }
 
     /**
@@ -29,7 +28,7 @@ public class Input {
      * @param information The information to query for.
      * @return instance of this Input object.
      * @throws IllegalStateException  if input is an empty string.
-     * @throws NoSuchElementException if execution is terminated unexpectedly.
+     * @throws IOException if an I/O error occurs.
      */
     public static Input expect(String information) throws IllegalStateException, IOException {
         System.out.print(information + ": ");
@@ -37,10 +36,12 @@ public class Input {
         if (response == "") {
             throw new IllegalStateException("This information is required.");
         }
-        return getInstance(source);
+        return getInstance(reader);
     }
 
     /**
+     * Converts the user's response into an {@link Integer}.
+     * 
      * @return the {@code response} as an integer.
      * @throws NumberFormatException if {@code response} cannot be converted.
      */
@@ -49,20 +50,8 @@ public class Input {
     }
 
     /**
-     * @param digits required in the response number.
-     * @return the {@code response} as an integer.
-     * @throws NumberFormatException if {@code response} cannot be parsed to an
-     *                               {@link Integer}.
-     */
-    public Integer toInteger(int digits) throws NumberFormatException {
-        int result = Integer.parseInt(response);
-        if ((int) Math.log10(result) + 1 != digits) {
-            throw new IllegalArgumentException("The number should be " + digits + " digits long.");
-        }
-        return result;
-    }
-
-    /**
+     * Converts the user's response to a boolean, such that "yes" is {@code true}, and any other response is considered {@code false}.
+     * 
      * @return {@code true} if {@code response == "yes"}, otherwise {@code false}.
      */
     public Boolean toBoolean() {
@@ -74,15 +63,14 @@ public class Input {
 
     /**
      * @return {@code response} as a {@link Double}.
-     * @throws NumberFormatException if {@code response} cannot be parsed to
-     *                               {@link Double}.
+     * @throws NumberFormatException if the user's response cannot be converted.
      */
     public Double toDouble() throws NumberFormatException {
         return Double.parseDouble(response);
     }
 
     /**
-     * Returns the last user response given.
+     * Gets the last user response received.
      * 
      * @return the response given to {@link #expect(String)} or
      *         {@link #query(String)}.
@@ -93,7 +81,7 @@ public class Input {
     }
 
     /**
-     * Returns the last user response given if it matches the given regular
+     * Gets the last user response given if the response matches the given regular
      * expression.
      * 
      * @param regex the regular expression to match the response to.
@@ -109,17 +97,24 @@ public class Input {
         return response;
     }
 
+    /**
+     * The single instance of {@link Input} in this java application.
+     */
     private static Input inputInstance;
-    private static BufferedReader source;
+    /**
+     * The object used to read user input.
+     */
+    private static BufferedReader reader;
 
     /**
      * Instantiates a new Input object if no Input objects are in scope.
      * 
+     * @param reader the reader of the user's responses.
      * @return Input object.
      */
     public static Input getInstance(BufferedReader reader) {
         if (inputInstance == null) {
-            source = reader;
+            Input.reader = reader;
             inputInstance = new Input();
         }
         return inputInstance;
@@ -133,13 +128,16 @@ public class Input {
      * @throws IOException if an I/O error occurs
      */
     private static String readInput() throws IOException {
-        String input = source.readLine();
+        String input = reader.readLine();
         if (input != null) {
             return input.trim();
         }
         return null;
     }
 
+    /**
+     * This class's constructor.
+     */
     private Input() {
     }
 }

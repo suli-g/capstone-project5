@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import Components.QueryBuilder;
 import Model.DatabaseConnection;
 
+
 public class EntityModel extends EntityUpdater {
     private static EntityModel modelInstance;
 

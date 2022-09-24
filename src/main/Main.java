@@ -10,31 +10,33 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.time.format.DateTimeParseException;
-
+import java.util.Stack;
 
 import Components.Input;
-import Components.ViewStack;
 import Components.Menu.Menu;
-import Components.Menu.MenuException;
-import Components.Menu.MenuFactory;
-import Controller.EntityManager;
-import Controller.InteractionManager;
-import Entities.Entity;
-import Interfaces.Menus;
+import Controller.EntityController;
+import Controller.MenuController;
+import Controller.ResponseController;
+import Controller.ParticipantController;
+import Interfaces.Constants;
+import Interfaces.IMenu;
 import Model.DatabaseConnection;
 import Model.EntityModel.EntityModel;
 import Utilities.OutputUtils;
 
-public class Main implements Menus {
-    private static ViewStack<Entity> entityStack;
-    private static EntityManager entityManager;
-    private static MenuFactory menuFactory;
+/**
+ * Contains this application's main execution loop.
+ */
+public class Main implements Constants, IMenu {
+    private static EntityController entityController;
+    private static MenuController menuController;
+    private static ParticipantController participantController;
     private static Menu currentMenu;
-    private static InteractionManager interactionManager;
+    private static ResponseController interactionManager;
 
     /**
-     * @param mainArgs
-     * @throws SQLException
+     * @param mainArgs the arguments supplied by the main function.
+     * @throws SQLException if a database connection error occurs.
      */
     private static void initializeEntityManager(String[] mainArgs) {
         try {
@@ -44,12 +46,11 @@ public class Main implements Menus {
             } else {
                 configFileStream = new FileInputStream(mainArgs[0]);
             }
-            entityManager = EntityManager.getInstance(
+            entityController = EntityController.getInstance(
                     EntityModel.getInstance(DatabaseConnection.loadFromFile(configFileStream)));
-            entityStack = new ViewStack<>();
-            menuFactory = MenuFactory.getInstance(new ViewStack<>());
-            menuFactory.addMenu(MAIN_MENU);
-            interactionManager = InteractionManager.getInstance(entityManager, menuFactory, entityStack);
+            menuController = MenuController.getInstance();
+            menuController.addMenu(MAIN_MENU);
+            interactionManager = ResponseController.getInstance(entityController, menuController, participantController);
         } catch (IOException ioError) {
             ioError.printStackTrace();
             System.out.println("An error occurred while reading from the db.properties file.");
@@ -60,33 +61,41 @@ public class Main implements Menus {
             System.out.println("The Database failed to load or has not been setup properly.");
             System.out.println("Run 'source setup.sql' from the mysql cli first.");
             System.exit(1);
+        } catch (NullPointerException configMissing) {
+            OutputUtils.printWarning(configMissing.getLocalizedMessage());
+            System.exit(1);
         }
     }
 
     /**
-     * @param args
+     * @param args runtime arguments.
      */
     public static void main(String[] args) {
         Input.getInstance(new BufferedReader(new InputStreamReader(System.in)));
         initializeEntityManager(args);
+
+        OutputUtils.printDoubleLine();
         OutputUtils.printHeading(COMPANY_NAME);
-        OutputUtils.printCentered(APPLICATION_TYPE);
         OutputUtils.printLine();
-        while (!menuFactory.isDone()) {
-            currentMenu = menuFactory.showCurrent();
+        OutputUtils.printCentered(APPLICATION_TYPE);
+        while (!menuController.isDone()) {
+            currentMenu = menuController.showCurrent();
             try {
                 handleInteraction();
             } catch (SQLException error) {
                 OutputUtils.printWarning("An error occurred while accessing the database.");
             } catch (IOException error) {
                 OutputUtils.printWarning("An error occurred while while reading from input.");
-            } catch (MenuException.InvalidSelectionException error) {
+            } catch (Menu.InvalidSelectionException error) {
                 OutputUtils.printWarning("The value entered is not on the menu.");
             } 
             catch (NumberFormatException error) {
                 OutputUtils.printWarning("Please enter a number.");
             }
             catch (IllegalStateException error) {
+                OutputUtils.printWarning(error.getLocalizedMessage());
+            }
+            catch (IllegalArgumentException error) {
                 OutputUtils.printWarning(error.getLocalizedMessage());
             }
         }
@@ -102,11 +111,11 @@ public class Main implements Menus {
     private static void handleInteraction() throws SQLException, IOException {
         String command = currentMenu.getCommand();
         switch (command) {
-            case MenuFactory.BACK_COMMAND:
-                menuFactory.popTop();
+            case MenuController.BACK_COMMAND:
+                menuController.popTop();
                 return;
-            case MenuFactory.QUIT_COMMAND:
-                menuFactory.clearStack();
+            case MenuController.QUIT_COMMAND:
+                menuController.clearStack();
                 return;
         }
 
@@ -115,7 +124,7 @@ public class Main implements Menus {
                 interactionManager.mainMenuInteraction();
                 break;
             case PROJECT_MENU_NAME:
-                interactionManager.projectMenuInteraction(entityStack);
+                interactionManager.projectMenuInteraction();
                 break;
             case PARTICIPANT_MENU_NAME:
                 interactionManager.participantMenuInteraction();

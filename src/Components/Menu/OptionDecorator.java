@@ -3,7 +3,7 @@ package Components.Menu;
 /**
  * Represents an option for a {@link Menu}.
  */
-class OptionDecorator {
+public class OptionDecorator {
     /**
      * The format of all option-strings.
      */

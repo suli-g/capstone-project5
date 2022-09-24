@@ -1,20 +1,28 @@
 package Entities;
 
-import Interfaces.Overviews;
+import Interfaces.EntityFormatter;
 
-public class EntityDecorator implements Overviews{
-    public static String listProject(Project project) {
-        return String.format(PROJECT_OVERVIEW_FORMAT, project.getNumber(), project.getName(), project.getAddress(), project.getType(), project.getErfNumber());
-    }
-
-    public static String showProject(Project project) {
-        return new StringBuilder(String.format(PROJECT_OVERVIEW_FORMAT, project.getNumber(), project.getName(), project.getAddress(), project.getType(), project.getErfNumber()))
-        .append(String.format(ACCOUNT_OVERVIEW_FORMAT, project.getCost(), project.getPaid()))
-        .append(String.format(PROGRESS_OVERVIEW_FORMAT, project.getDueDate(), project.getDateFinalized()))
-        .toString();
-    }
-
-    public static String showPerson(Person person) {
-        return String.format(PERSON_OVERVIEW_FORMAT, person.getFirstName(), person.getLastName(), person.getEmailAddress(), person.getPhoneNumber(), person.getAddress());
+/**
+ * Displays {@link Entity} objects in readable formats as defined in {@link EntityFormatter}.
+ */
+public class EntityDecorator implements EntityFormatter {
+    /**
+     * Prints the details of an entity to the terminal in a format 
+     * 
+     * @param entity an object that implements {@link Entity}.
+     */
+    public static void printEntity(Entity entity) {
+        if (entity instanceof Person) {
+            Person person = (Person) entity;
+            System.out.printf(PERSON_OVERVIEW_FORMAT, person.getFirstName(), person.getLastName(),
+                person.getEmailAddress(), person.getPhoneNumber(), person.getAddress());
+        }
+        else if (entity instanceof Project) {
+            Project project = (Project) entity;
+            System.out.printf(PROJECT_OVERVIEW_FORMAT, project.getNumber(), project.getName(), project.getAddress(),
+                project.getType(), project.getErfNumber());
+        System.out.printf(ACCOUNT_OVERVIEW_FORMAT, project.getCost(), project.getPaid());
+        System.out.printf(PROGRESS_OVERVIEW_FORMAT, project.getDueDate(), project.getDateFinalized());
+        }
     }
 }

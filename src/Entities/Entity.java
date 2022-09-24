@@ -1,12 +1,12 @@
 package Entities;
 
-import Interfaces.Overviews;
+import Interfaces.EntityFormatter;
 
 /**
  * Represents an Entity
  */
 
-public abstract class Entity implements Overviews{
+public abstract class Entity implements EntityFormatter{
     protected String name;
     protected String address;
     protected String type;

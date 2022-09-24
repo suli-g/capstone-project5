@@ -2,8 +2,6 @@ package Components.Menu;
 
 import java.util.LinkedHashMap;
 
-import Components.Menu.MenuException.InvalidSelectionException;
-
 /**
  * Represents a Menu.
  */
@@ -12,9 +10,12 @@ public class Menu extends LinkedHashMap<String, String> {
      * The name of this Menu instance.
      */
     private String name;
-    private String[] selected;
-    
-    /** 
+    /**
+     * The user's response, split into an array by spaces.
+     */
+    private String[] response;
+
+    /**
      * @return the name of this Menu.
      */
     public String getName() {
@@ -30,55 +31,52 @@ public class Menu extends LinkedHashMap<String, String> {
         name = menuName;
     }
 
-    
-    /** 
-     * @return the first String in {@link #selected}.
+    /**
+     * @return the first String in {@link #response}.
      */
     public String getCommand() {
-        return selected[0];
+        return response[0];
     }
 
-    
-    /** 
-     * Gets the String at {@code index} in {@link #selected}.
+    /**
+     * Gets the String at {@code index} in {@link #response}.
      * 
      * @param index the index of the String to get.
-     * @return the String at {@code index}; 
-     *      null if {@code index} is out of bounds.
+     * @return the String at {@code index};
+     *         null if {@code index} is out of bounds.
      * 
      */
-    public String getParameter(int index){
-        if (index >= selected.length - 1) {
+    public String getParameter(int index) {
+        if (index >= response.length - 1) {
             return null;
         }
-        return selected[index + 1];
+        return response[index + 1];
     }
 
-    
-    /** 
+    /**
      * Gets an array of the Strings entered by the user.
      * 
-     * @return {@link #selected}
+     * @return {@link #response}
      */
     public String[] getSelected() {
-        return selected;
+        return response;
     }
 
-    
-    /** 
-     * Sets {@link #selected} to {@code command} if {@code command} is a valid menu choice.
+    /**
+     * Sets {@link #response} to {@code command} if {@code command} is a valid menu
+     * choice.
      * 
      * @param command an array of the strings entered by the user.
-     * @return {@link #selected}.
+     * @return {@link #response}.
      * @throws InvalidSelectionException if the user enters an invalid key.
      */
     public String[] setSelected(String... command) throws InvalidSelectionException {
         if (!containsKey(command[0])) {
             throw new InvalidSelectionException(command[0]);
         } else {
-            selected = command;
+            response = command;
         }
-        return selected;
+        return response;
     }
 
     /**
@@ -89,12 +87,25 @@ public class Menu extends LinkedHashMap<String, String> {
     @Override
     public String toString() {
         StringBuilder menuDescription = new StringBuilder();
-            this.forEach((option, description) -> {
-                menuDescription
-                .append(OptionDecorator.parse(option, description));
-            });
-            
-            return menuDescription
-            .toString();
+        this.forEach((option, description) -> {
+            menuDescription
+                    .append(OptionDecorator.parse(option, description));
+        });
+
+        return menuDescription
+                .toString();
+    }
+
+    /**
+     * Represents an Exception thrown when an invalid selection is made in this
+     * Menu.
+     */
+    public static class InvalidSelectionException extends IllegalArgumentException {
+        /**
+         * @param option the option for which the selection is invalid.
+         */
+        public InvalidSelectionException(String option) {
+            super(String.format("The option '%s'is invalid for this menu.", option));
+        }
     }
 }

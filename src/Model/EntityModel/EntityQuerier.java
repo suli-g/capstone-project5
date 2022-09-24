@@ -10,15 +10,13 @@ public abstract class EntityQuerier extends QueryModel {
         super(queryBuilder);
     }
 
-    
     /** 
-     * @param status
+     * @param view
      * @return ResultSet
      * @throws SQLException
      */
-    public ResultSet getProjects(PROJECT_VIEW status) throws SQLException {
-        String table = status.LABEL;
-        PreparedStatement statement = queryBuilder.select(table, "*").prepare();
+    public ResultSet getProjects(String view) throws SQLException {
+        PreparedStatement statement = queryBuilder.select(view, "*").prepare();
         ResultSet results = statement.executeQuery();
         if (!results.next()) {
             return null;
@@ -26,34 +24,6 @@ public abstract class EntityQuerier extends QueryModel {
         return results;
     }
 
-    
-    /** 
-     * @param phoneNumber
-     * @param erfNumber
-     * @return ResultSet
-     * @throws SQLException
-     */
-    public ResultSet verifyPerson(String phoneNumber, int erfNumber) throws SQLException {
-        PreparedStatement query = queryBuilder
-                .select("person",
-                        "first_name",
-                        "last_name",
-                        "email_address",
-                        "phone_number",
-                        "erf_number")
-                .join(QueryBuilder.JOIN_TYPE.RIGHT_JOIN, "address", "erf_number", "physical_address")
-                .where("phone_number")
-                .or("erf_number").prepare();
-        query.setString(1, phoneNumber);
-        query.setInt(2, erfNumber);
-        ResultSet results = query.executeQuery();
-        if (results.next()) {
-            return results;
-        }
-        return null;
-    }
-
-    
     /** 
      * @param projectId
      * @return ResultSet

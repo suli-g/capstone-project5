@@ -4,13 +4,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import Interfaces.Queries;
+import Interfaces.IQuery;
 import Model.DatabaseConnection;
 
 /**
  * Represents a QueryBuilder.
  */
-public class QueryBuilder implements Queries { 
+public class QueryBuilder implements IQuery { 
     private StringBuilder query;
     
     /** 
@@ -46,7 +46,7 @@ public class QueryBuilder implements Queries {
     /** 
      * Appends a SQL "VALUES" clause to {@link #query}.
      * 
-     * @param values
+     * @param values the comma-separated list of column names to be included in the "VALUES" clause.
      * @return this QueryBuilder instance
      */
     public QueryBuilder values(String... values) {
@@ -95,7 +95,7 @@ public class QueryBuilder implements Queries {
     }
 
     /** 
-     * Appends "SET " and "{@code columnName=?}" for each {@code columnName} in {@code columnNames} to {@link query}.
+     * Appends "SET " and "{@code columnName=?}" for each {@code columnName} in {@code columnNames} to {@link #query}.
      * 
      * @param columnNames the columns to equate to placeholders
      * @return this QueryBuilder instance
@@ -114,28 +114,8 @@ public class QueryBuilder implements Queries {
     }
 
     /** 
-     * Appends "{@link JOIN_TYPE} JOIN {@code tableName} ON {@code onColumnName = value}" to {@link #query}.
-     * 
-     * @param joinType the type of join to use
-     * @param tableName the table with which to join
-     * @param columnName the column whose value to check
-     * @param value the value the column should have
-     * @return this QueryBuilder instance
-     */
-    public QueryBuilder join(JOIN_TYPE joinType, String tableName, String columnName, String value) {
-        getQuery();
-        query.append(" ").append(joinType.getValue())
-            .append(tableName)
-                .append(" ON ")
-                .append(columnName)
-                .append("=")
-                .append(value);
-        return this;
-    }
-
-    /** 
      * Appends "SELECT ", followed by a comma-separated list of {@code columnName} for each columnName in {@code columnNames}, and
-     * "FROM {@tableName}" to {@link #query}.
+     * "FROM {@param tableName}" to {@link #query}.
      *  
      * @param tableName the table name to select from
      * @param columnNames the columns to select
@@ -188,7 +168,7 @@ public class QueryBuilder implements Queries {
      * Creates a {@link PreparedStatement} from {@link #query} as a {@link String} and reinitializes {@code query}.
      * 
      * @return the created {@link PreparedStatement}
-     * @throws SQLException
+     * @throws SQLException if a database access error occurs.
      */
     public PreparedStatement prepare() throws SQLException {
         String statement = query.toString();

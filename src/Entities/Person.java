@@ -7,12 +7,11 @@ public class Person extends Entity {
     /**
      * Person constructor.
      * 
+     * @param personId        the person_id of this person's database row.
      * @param firstName       the first name of this person.
      * @param lastName        the last name of this person.
      * @param physicalAddress the physical address of this person.
      * @param emailAddress    the email address of this person.
-     * @param phoneNumber     the phone number of this person (leading zeros
-     *                        truncated).
      */
     public Person(int personId, String firstName, String lastName, String physicalAddress, String emailAddress) {
         super(firstName, physicalAddress, emailAddress, personId); // store the full name of this                                                       // person as the entity name.
@@ -21,7 +20,7 @@ public class Person extends Entity {
     }
 
     /**
-     * @param emailAddress the new email address of this person.
+     * @param emailAddress this person object's new email address
      * @return this person.
      */
     public Person setEmailAddress(String emailAddress) {
@@ -30,7 +29,9 @@ public class Person extends Entity {
     }
 
     /**
-     * @param phoneNumber the new phone number of this person.
+     * Sets this {@link #Person}'s phone number.
+     * 
+     * @param phoneNumber this person object's new phone number
      * @return this person.
      */
     public Person setPhoneNumber(String phoneNumber) {

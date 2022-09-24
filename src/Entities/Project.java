@@ -7,7 +7,18 @@ import java.time.format.DateTimeParseException;
  * Represents a project
  */
 public class Project extends Entity {
-    private double cost = 0, paid = 0;
+    /**
+     * The String to use in place of {@code null}.
+     */
+    public static final String NOT_SET = "N/A";
+    /**
+     * The total amount owed for this project's finalization.
+     */
+    private double cost = 0, 
+    /**
+     * The total amount paid for this project's finalization
+     */
+    paid = 0;
     private LocalDate dueDate, dateFinalized = null;
 
     /**
@@ -39,7 +50,7 @@ public class Project extends Entity {
     /**
      * @param date the project was finalized.
      * @return this Project object
-     * @throws DateTimeParseException
+     * @throws DateTimeParseException if {@code date} cannot be parsed to a date.
      */
     public Project setDateFinalized(String date) throws DateTimeParseException {
         if (date != null) {
@@ -48,16 +59,18 @@ public class Project extends Entity {
         return this;
     }
 
+    /**
+     * The ERF number of the project's address.
+     */
     private int erfNumber;
 
     /**
      * Project constructor.
      * 
+     * @param projectNumber  the phone number of this project's customer.
      * @param projectName    the name of this project.
      * @param projectAddress the address of this project.
      * @param buildingType   the type of building this project represents.
-     * @param erfNumber      the ERF number of this project.
-     * @param projectCost    the cost of this project.
      */
     public Project(int projectNumber, String projectName, String projectAddress, String buildingType) {
         super(projectName, projectAddress, buildingType, projectNumber);
@@ -119,14 +132,14 @@ public class Project extends Entity {
      * @return the due date of this project.
      */
     public String getDueDate() {
-        return dueDate == null ? "n/a" : dueDate.toString();
+        return dueDate == null ? NOT_SET : dueDate.toString();
     }
 
     /**
      * @return the date this project was finalized.
      */
     public String getDateFinalized() {
-        return dateFinalized == null ? "n/a" : dateFinalized.toString();
+        return dateFinalized == null ? NOT_SET : dateFinalized.toString();
     }
 
     /**

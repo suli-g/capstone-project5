@@ -1,20 +1,21 @@
-package Components.Menu;
+package Controller;
 
 import java.io.IOException;
+import java.util.Stack;
 
 import Components.Input;
-import Components.ViewStack;
-import Components.Menu.MenuException.InvalidSelectionException;
-import Interfaces.Menus;
+import Components.Menu.Menu;
+import Components.Menu.OptionDecorator;
+import Interfaces.IMenu;
+import Utilities.OutputUtils;
 
 /**
  * Controls the instantiation of {@link Menu} instances for this application.
  */
-public class MenuFactory implements Menus {
+public class MenuController implements IMenu {
 
     /**
-     * @return {@value true} if the {@link #menuStack} is empty; {@value false}
-     *         otherwise.
+     * @return {@code true} if the {@link #menuStack} is empty; {@code false} if {@link #menuStack} is not empty.
      */
     public boolean isDone() {
         return menuStack.empty();
@@ -26,9 +27,9 @@ public class MenuFactory implements Menus {
      * 
      * @return The single MenuFactory instance in this running application.
      */
-    public static MenuFactory getInstance(ViewStack<Menu> menuStack) {
+    public static MenuController getInstance() {
         if (factoryInstance == null) {
-            factoryInstance = new MenuFactory(menuStack);
+            factoryInstance = new MenuController();
         }
         return factoryInstance;
     }
@@ -36,7 +37,7 @@ public class MenuFactory implements Menus {
     /**
      * The menu stack.
      */
-    private ViewStack<Menu> menuStack;
+    private Stack<Menu> menuStack;
 
     /**
      * Adds a menu to {@link #menuStack}.
@@ -50,8 +51,6 @@ public class MenuFactory implements Menus {
         menu.put(QUIT_COMMAND, QUIT_COMMAND_DESCRIPTION);
         menuStack.push(menu);
     }
-
-    private String borderMarker = "-";
 
     /**
      * Removes the {@link Menu} at the top of the stack if the stack has more than
@@ -91,21 +90,20 @@ public class MenuFactory implements Menus {
         int titleLength = name.length() + 6;
         OptionDecorator.setSize(titleLength);
         StringBuilder menuOutline = new StringBuilder()
-                .append('\n')
-                .append(name)
+                .append(OutputUtils.centerText(name))
                 .append("\n")
                 .append(currentMenu)
-                .append("\n")
-                .append(borderMarker.repeat(titleLength))
                 .append("\n");
+        OutputUtils.printDoubleLine();
         System.out.println(menuOutline.toString());
+        OutputUtils.printLine();
         try {
             currentMenu.setSelected(Input.expect(">").toString().split("\s"));
         } catch (IOException io) {
             io.printStackTrace();
         } catch (NullPointerException err) {
             System.out.println("Data entry was interrupted unexpectedly.");
-        } catch (InvalidSelectionException err) {
+        } catch (Menu.InvalidSelectionException err) {
             System.out.println(err.getLocalizedMessage());
         }
         return currentMenu;
@@ -114,12 +112,12 @@ public class MenuFactory implements Menus {
     /**
      * The MenuFactory instance in this application.
      */
-    private static MenuFactory factoryInstance;
+    private static MenuController factoryInstance;
 
     /**
      * The constructor for this class.
      */
-    private MenuFactory(ViewStack<Menu> menuStack) {
-        this.menuStack = menuStack;
+    private MenuController() {
+        menuStack = new Stack<>();
     }
 }
