@@ -28,4 +28,8 @@ public interface Constants {
      * The maximum character amount to use for a line in output.
      */
     int TERMINAL_WIDTH = 100;
+    /**
+     * The message to show when SIGINT is received.
+     */
+    String USER_FORCEFULLY_ABORTED_MESSAGE = "Program execution has been forcefully stopped - Data may have been lost.";
 }

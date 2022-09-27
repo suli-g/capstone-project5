@@ -1,4 +1,9 @@
 DELIMITER $$
+/*
+** This procedure checks the relationship table when a new participant is inserted and,
+** If the amount of participants with relationships equal to that of new_relationship,
+** a warning is signalled detailing the issue.
+*/
 CREATE PROCEDURE limit_relationships(
     new_relationship varchar(30),
     new_id int unsigned)
@@ -18,6 +23,10 @@ BEGIN
                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = message_text;
     END IF;
 END$$
+/*
+** This procedure simplifies the assignment of a batch of person records to a project
+** in the participant table.
+*/
 CREATE PROCEDURE assign_project(
     project_id int unsigned,
     due_date Date,
@@ -37,6 +46,9 @@ BEGIN
     (project_id, architect_id, @architect_relationship),
     (project_id, structural_engineer_id, @structural_engineer_relationship);
 END$$
+/*
+** This procedure simplifies the assignment of a person to a given project with the given relationship.
+*/
 CREATE PROCEDURE assign_participant(
     project_id int unsigned,
     due_date Date,
@@ -48,6 +60,10 @@ BEGIN
     VALUES
     (project_id, person_id, relationship);
 END$$
+/*
+** This procedure sets the default name of a project to the combination of the project_type and last_name
+** of the participant with person_id = customer_id
+*/
 CREATE PROCEDURE set_default_project_name(
     project_id int unsigned,
     project_type varchar(30),

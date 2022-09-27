@@ -2,7 +2,8 @@ Components
 Components.Menu
 Controller
 Entities
+Factories
 Interfaces
 main
-Model
+Models
 Utilities

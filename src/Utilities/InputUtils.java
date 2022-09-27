@@ -47,7 +47,7 @@ public class InputUtils {
     public static String selectFromList(List<String> options) throws IllegalStateException, NumberFormatException, IOException{
         int totalOptions = options.size(), selection;
         for (int i = 0; i < totalOptions; i++) {
-            System.out.println(options.get(i));
+            System.out.printf("%6d %-6s\n", i, options.get(i));
         }
         selection = Input.expect(">").toInteger();
         if (selection >= totalOptions) {

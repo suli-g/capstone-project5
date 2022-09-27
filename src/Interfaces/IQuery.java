@@ -3,7 +3,7 @@ package Interfaces;
 /**
  * Contains strings used in this application for SQL queries.
  */
-public interface IQuery {
+public interface IQuery extends Constants {
     /**
      * Used to verify that a string matches the phone_number column's
      * data type as recognized in the Database.
@@ -14,7 +14,11 @@ public interface IQuery {
      * data type as recognized in the Database.
      */
     String PHONE_NUMBER_REGEX = "\\d{10}";
-
+    /**
+     * The message to be used if the phone number provided does not match
+     * {@link #PHONE_NUMBER_REGEX}.
+     */
+    String PHONE_NUMBER_LIMIT_EXPLANATION = "The phone number should have exactly 10 numerical digits.";
     /**
      * The name of the view used to access incomplete projects.
      */
@@ -42,7 +46,15 @@ public interface IQuery {
     /**
      * The Message to be displayed when a record has failed to be created.
      */
-    String INSERT_FAILURE_MESSAGE = "THE RECORD COULD NOT BE CREATED.";
+    String INSERT_FAILURE_MESSAGE = "Registration failed - no rows were affected.";
+    /**
+     * The Message to be displayed when a record has failed to be created.
+     */
+    String INSERT_FAILURE_MESSAGE_NO_ID = "Registration failed - no ID could be obtained.";
+    /**
+     * The Message to be displayed when a record has been updated.
+     */
+    String ADDRESS_INSERT_FAILURE_MESSAGE = "Address registration failed - no rows were affected.";
     /**
      * The Message to be displayed when a record has been updated.
      */
@@ -51,4 +63,8 @@ public interface IQuery {
      * The Message to be displayed when a record has failed to be updated.
      */
     String UPDATE_FAILURE_MESSAGE = "THE RECORD COULD NOT BE UPDATED.";
+    /**
+     * The message to show when no types have been defined in the database.
+     */
+    String NO_TYPES = "No relationship or building types have been defined.";
 }

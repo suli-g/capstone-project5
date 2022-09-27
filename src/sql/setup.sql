@@ -11,10 +11,10 @@ SET @contractor_relationship := 'contractor';
 SET @architect_relationship := 'architect';
 SET @structural_engineer_relationship := 'structural engineer';
 
-source tables.sql
-source views.sql
-source procedures.sql
-source triggers.sql
+source ./tables.sql
+source ./views.sql
+source ./procedures.sql
+source ./triggers.sql
 
 INSERT INTO building(building_type) 
     VALUES ("house"), ("villa"), ("mansion"),("apartment"), ("rdp"), ("shack");
@@ -26,4 +26,4 @@ INSERT INTO relationship(relationship_type)
 (@architect_relationship),
 (@structural_engineer_relationship);
 
-source test_data.sql
+source ./test_data.sql /** Remove line before deploying to production.

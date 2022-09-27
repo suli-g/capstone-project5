@@ -13,11 +13,12 @@ SELECT DISTINCT erf_number,
     ) AS full_address
 FROM address;
 CREATE VIEW people AS
-SELECT person_id, first_name, last_name, phone_number, email_address, full_address AS physical_address
+SELECT addresses.erf_number, person_id, first_name, last_name, phone_number, email_address, full_address AS physical_address
     FROM person
     LEFT JOIN addresses ON person.physical_address = erf_number;
 CREATE VIEW participants AS
 SELECT DISTINCT project_id,
+    addresses.erf_number,
     person.person_id,
     relationship_type,
     first_name,
@@ -48,8 +49,7 @@ SELECT DISTINCT project.project_id,
 FROM project
     LEFT JOIN addresses ON project.project_address = addresses.erf_number
     LEFT JOIN account ON project.project_id = account.project
-    LEFT JOIN progress ON progress.project = project.project_id
-    LEFT JOIN participants ON project.project_id = participants.project_id;
+    LEFT JOIN progress ON progress.project = project.project_id;
 
 CREATE VIEW incomplete_projects AS
 SELECT DISTINCT *

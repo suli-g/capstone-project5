@@ -19,7 +19,7 @@ CREATE TABLE Relationship(
  ** Stores all addresses.
  */
 CREATE TABLE Address(
-    erf_number int UNSIGNED UNIQUE,
+    erf_number int UNSIGNED,
     street_address varchar(80),
     suburb varchar(60),
     city varchar(60),
@@ -72,20 +72,22 @@ CREATE TABLE Participant(
  ** Does not cascade on deletion in case of 
  */
 CREATE TABLE Account(
+    account_id int UNSIGNED AUTO_INCREMENT,
     project int unsigned NOT NULL,
     amount_due int NOT NULL,
     amount_paid int DEFAULT 0,
     FOREIGN KEY(project) REFERENCES Project(project_id),
-    PRIMARY KEY(project)
+    PRIMARY KEY(account_id)
 );
 /**
  ** Stores project progress details.
  ** Cascades when a project is terminated.
  */
 CREATE TABLE Progress(
+    tracker_id int UNSIGNED AUTO_INCREMENT,
     project int UNSIGNED NOT NULL,
     date_due Date NOT NULL,
     date_finalized Date,
-    PRIMARY KEY(project),
+    PRIMARY KEY(tracker_id),
     FOREIGN KEY(project) REFERENCES Project(project_id) ON DELETE CASCADE
 );

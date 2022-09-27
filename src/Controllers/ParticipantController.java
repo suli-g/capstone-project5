@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import Entities.Person;
+import Factories.PersonFactory;
+import Models.EntityModel.EntityModel;
 
 /**
  * Controls interactions related to participants in a project.
@@ -16,18 +18,17 @@ public class ParticipantController {
     private static ArrayList<String> roleTypes;
 
     /**
-     * Sets the list of allowe role types for this ParticipantController instance.
+     * Adds a role type to the list of role types ({@link roleTypes}).
      * 
-     * @param roleTypes the list of role types.
+     * @param roleType The role type to add.
      */
-    public static void setRoleTypes(ArrayList<String> roleTypes) {
-        ParticipantController.roleTypes = roleTypes;
+    public static void addRoleType(String roleType) {
+        if (roleTypes == null) {
+            roleTypes = new ArrayList<>();
+        }
+        roleTypes.add(roleType);
     }
 
-    /**
-     * The selected role.
-     */
-    private String selectedRole;
     /**
      * The available instance of ParticipantController in this application.
      */
@@ -37,6 +38,7 @@ public class ParticipantController {
      * This class's constructor.
      */
     private ParticipantController() {
+        participants = new HashMap<>();
     }
 
     /**
@@ -73,12 +75,18 @@ public class ParticipantController {
         return participants == null || participants.size() == 0;
     }
 
+    private static EntityModel participantModel;
+
     /**
      * Creates and retrieves a new instance of ParticipantController.
      * 
+     * @param model the model to be used for communicating with the database.
      * @return the new ParticipantController instance.
      */
-    public static ParticipantController getNewInstance() {
+    public static ParticipantController getInstance(EntityModel model) {
+        if (controllerInstance == null) {
+            participantModel = model;
+        }
         controllerInstance = new ParticipantController();
         return controllerInstance;
     }
@@ -121,13 +129,6 @@ public class ParticipantController {
     }
 
     /**
-     * @return the {@link Person} mapped to the {@code selectedRole} key.
-     */
-    public Person getSelectedParticipant() {
-        return participants.get(selectedRole);
-    }
-
-    /**
      * Inserts {@code person} at the {@code selectedRole} key in
      * {@link #participants}.
      * 
@@ -157,33 +158,14 @@ public class ParticipantController {
      * @throws SQLException if a Database communication occurs.
      */
     public void setParticipants(ResultSet results) throws SQLException {
-        if (results == null) {
+        if (participants == null) {
             participants = new HashMap<>();
+        } if (results == null) {
+            throw new IllegalAccessError("The selected project has no participants.");
         }
         do {
-            Person participant = ParticipantController.parsePerson(results.getInt("person_id"),
-                    results.getString("first_name"),
-                    results.getString("last_name"),
-                    results.getString("physical_address"),
-                    results.getString("email_address"), results.getString("phone_number"));
-            assignPerson(results.getString("relationship_type"), participant);
+            assignPerson(results.getString("relationship_type"), PersonFactory.fromResultSet(results));
         } while (results.next());
-    }
-
-    /**
-     * Creates a new {@link Person} object with the given parameters.
-     * 
-     * @param personId     of the Person
-     * @param firstName    of the Person
-     * @param lastName     of the Person
-     * @param emailAddress of the Person
-     * @param phoneNumber  of the Person
-     * @param physicalAddress  of the Person
-     * @return a {@link Person} object with the given parameters.
-     */
-    public static Person parsePerson(int personId, String firstName, String lastName, String emailAddress,
-            String phoneNumber, String physicalAddress) {
-        return new Person(personId, firstName, lastName, physicalAddress, emailAddress);
     }
 
     /**
@@ -196,5 +178,76 @@ public class ParticipantController {
         List<String> missingRoles = roleTypes;
         roleTypes.removeIf(role -> participants.containsKey(role));
         return missingRoles;
+    }
+
+    private String selectedRole;
+
+    /**
+     * @return the {@link Person} mapped to the {@code selectedRole} key.
+     */
+    public Person getSelectedParticipant() {
+        return participants.get(selectedRole);
+    }
+
+    /**
+     * Inserts the given parameters into the 'participant' table in the database.
+     * 
+     * @param role the person should be assigned to.
+     * @param personId of the person to be assigned.
+     * @param projectId of the project to which the {@code personId} should be assigned..
+     * @return the result of {@link #getPerson(personId)}
+     * @throws SQLException if a database error occurs
+     */
+    public Person registerParticipant(String role, int personId, int projectId)
+            throws SQLException {
+        participantModel.registerParticipant(projectId, personId, role).executeUpdate();
+        Person person = getPerson(personId);
+        assignPerson(role, person);
+        return person;
+    }
+
+    /**
+     * Finds the row in the 'person' table with the given 'phone_number' value.
+     * 
+     * @param phoneNumber the phone_number of the person to find.
+     * @return a new {@link Person} object if a match is found for the phone_number.
+     * @throws SQLException if a database error occurs.
+     */
+    public Person findPerson(String phoneNumber)
+            throws SQLException {
+        ResultSet results = participantModel.selectPerson(phoneNumber);
+        if (results == null) {
+            return null;
+        }
+        return PersonFactory.fromResultSet(results);
+    }
+
+    /**
+     * Finds the row in the 'person' table with the given 'person_id' value.
+     * 
+     * @param personId the value of the 'person_id' column in the database.
+     * @return a new {@link Person} if the row is found, null if not.
+     * @throws SQLException if a database error occurs.
+     */
+    public Person getPerson(int personId)
+            throws SQLException {
+        ResultSet results = participantModel.selectPerson(personId);
+        if (results == null) {
+            return null;
+        } else {
+            return PersonFactory.fromResultSet(results);
+        }
+    }
+
+    /**
+     * @return true if the update was successful, false if the update failed.
+     * @throws SQLException if a database error occurs.
+     */
+    public boolean updateContactDetails() throws SQLException {
+        Person selectedPerson = getSelectedParticipant();
+        int personId = selectedPerson.getNumber();
+        String phoneNumber = selectedPerson.getPhoneNumber(),
+                emailAddress = selectedPerson.getEmailAddress();
+        return participantModel.updateContactDetails(personId, phoneNumber, emailAddress);
     }
 }

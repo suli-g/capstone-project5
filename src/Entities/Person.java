@@ -4,6 +4,25 @@ package Entities;
  */
 public class Person extends Entity {
     private String lastName, firstName, phoneNumber;
+    int erfNumber;
+    /**
+     * @return this Person's address' ERF number.
+     */
+    public int getErfNumber() {
+        return erfNumber;
+    }
+
+    /**
+     * Sets the ERF number of this Person object.
+     * 
+     * @param erfNumber to be assigned to this Person.
+     * @return this Person object.
+     */
+    public Person setErfNumber(int erfNumber) {
+        this.erfNumber = erfNumber;
+        return this;
+    }
+
     /**
      * Person constructor.
      * 

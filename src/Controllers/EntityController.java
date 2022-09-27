@@ -1,5 +1,6 @@
 package Controller;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,13 +10,13 @@ import java.util.Stack;
 import Entities.Entity;
 import Entities.Person;
 import Entities.Project;
-import Interfaces.Constants;
-import Model.EntityModel.EntityModel;
+import Interfaces.IQuery;
+import Models.EntityModel.EntityModel;
 
 /**
  * Controls the conversion of database results into {@link Entity}.
  */
-public class EntityController implements Constants {
+public class EntityController implements IQuery {
     /**
      * Stores all the allowed {@code building} types.
      */
@@ -27,7 +28,7 @@ public class EntityController implements Constants {
     /**
      * This application's {@link EntityModel} instance.
      */
-    private static EntityModel projectModel;
+    private static EntityModel entityModel;
     /**
      * This EntityModel's {@link ParticipantController} instance.
      */
@@ -41,6 +42,18 @@ public class EntityController implements Constants {
     }
 
     /**
+     * Adds a building type to {@link #buildingTypes}.
+     * 
+     * @param buildingType the new building type to be added.
+     */
+    public static void addBuildingType(String buildingType) {
+        if (buildingTypes == null) {
+            buildingTypes = new ArrayList<>();
+        }
+        buildingTypes.add(buildingType);
+    }
+
+    /**
      * This EntityController's {@link Stack} of {@link Entity} objects.
      */
     private Stack<Entity> entityStack;
@@ -51,7 +64,7 @@ public class EntityController implements Constants {
     /**
      * The currently selected {@code role} in this EntityController instance.
      */
-    private String selectedRole;
+
 
     /**
      * Push a new {@link Entity} to this EntityController instance's
@@ -88,15 +101,8 @@ public class EntityController implements Constants {
     /**
      * @return the {@link #entityStack}.
      */
-    public Stack<Entity> getEntityStack() {
-        return entityStack;
-    }
-
-    /**
-     * @return the {@link Person} mapped to the {@code selectedRole} key.
-     */
-    public Person getSelectedParticipant() {
-        return participantController.getParticipants().get(selectedRole);
+    public int getTotalEntitiesLoaded() {
+        return entityStack.size();
     }
 
     /**
@@ -136,9 +142,20 @@ public class EntityController implements Constants {
      * @throws SQLException if an error occurs while writing the data to the
      *                      database.
      */
-    public boolean registerProject(String projectName, String projectType, int erfNumber)
+    public int registerProject(String projectName, String projectType, int erfNumber)
             throws SQLException {
-        return projectModel.registerProject(projectName, projectType, erfNumber);
+        PreparedStatement registration = entityModel.registerProject(projectName, projectType, erfNumber);
+        int affectedRows = registration.executeUpdate();
+        if (affectedRows == 0) {
+            throw new SQLException(INSERT_FAILURE_MESSAGE);
+        }
+        try (ResultSet generatedKeys = registration.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                return generatedKeys.getInt(1);
+            } else {
+                throw new SQLException(INSERT_FAILURE_MESSAGE);
+            }
+        }
     }
 
     /**
@@ -148,7 +165,7 @@ public class EntityController implements Constants {
      * @throws SQLException if an error occurs while accessing the database.
      */
     public String findAddress(int erfNumber) throws SQLException {
-        ResultSet results = projectModel.getAddress(erfNumber);
+        ResultSet results = entityModel.getAddress(erfNumber);
         if (results != null) {
             return results.getString("full_address");
         }
@@ -168,11 +185,11 @@ public class EntityController implements Constants {
      *         not.
      * @throws SQLException if a database error occurs.
      */
-    public boolean registerAddress(
+    public int registerAddress(
             int erfNumber, String streetAddress, String suburb,
             String city, String province, int postCode) throws SQLException {
-        return projectModel.registerAddress(erfNumber, streetAddress, suburb, city, province,
-                postCode);
+        return entityModel.registerAddress(erfNumber, streetAddress, suburb, city, province,
+                postCode).executeUpdate();
     }
 
     /**
@@ -197,69 +214,9 @@ public class EntityController implements Constants {
     public Person registerPerson(String firstName, String lastName, String emailAddress, String phoneNumber,
             int erfNumber)
             throws SQLException {
-        projectModel.registerPerson(firstName, lastName, emailAddress, phoneNumber, erfNumber);
-        Person person = findPerson(phoneNumber);
+        entityModel.registerPerson(firstName, lastName, emailAddress, phoneNumber, erfNumber);
+        Person person = participantController.findPerson(phoneNumber);
         return person;
-    }
-
-    /**
-     * Inserts the given parameters into the 'participant' table in the database.
-     * 
-     * @param role     the person should be assigned to.
-     * @param personId the person_id of the person.
-     * @return the result of {@link #getPerson(personId)}
-     * @throws SQLException if a database error occurs
-     */
-    public Person registerParticipant(String role, int personId)
-            throws SQLException {
-        projectModel.registerParticipant(selectedProject.getNumber(), personId, role);
-        Person person = getPerson(personId);
-        participantController.assignPerson(role, person);
-        return person;
-    }
-
-    /**
-     * Finds the row in the 'person' table with the given 'phone_number' value.
-     * 
-     * @param phoneNumber the phone_number of the person to find.
-     * @return a new {@link Person} object if any
-     * @throws SQLException if a database error occurs.
-     */
-    public Person findPerson(String phoneNumber)
-            throws SQLException {
-        ResultSet results = projectModel.selectPerson(phoneNumber);
-        if (results == null) {
-            return null;
-        } else {
-            return new Person(results.getInt("person_id"),
-                    results.getString("first_name"),
-                    results.getString("last_name"),
-                    results.getString("physical_address"),
-                    results.getString("email_address"))
-                    .setPhoneNumber(results.getString("phone_number"));
-        }
-    }
-
-    /**
-     * Finds the row in the 'person' table with the given 'person_id' value.
-     * 
-     * @param personId the value of the 'person_id' column in the database.
-     * @return a new {@link Person} if the row is found, null if not.
-     * @throws SQLException if a database error occurs.
-     */
-    public Person getPerson(int personId)
-            throws SQLException {
-        ResultSet results = projectModel.selectPerson(personId);
-        if (results == null) {
-            return null;
-        } else {
-            return new Person(results.getInt("person_id"),
-                    results.getString("first_name"),
-                    results.getString("last_name"),
-                    results.getString("physical_address"),
-                    results.getString("email_address"))
-                    .setPhoneNumber(results.getString("phone_number"));
-        }
     }
 
     /**
@@ -270,7 +227,7 @@ public class EntityController implements Constants {
      * @throws SQLException if a database error occurs
      */
     public ResultSet getProjects(String table) throws SQLException {
-        ResultSet results = projectModel.getProjects(table);
+        ResultSet results = entityModel.getProjects(table);
         if (results == null) {
             return null;
         }
@@ -284,7 +241,7 @@ public class EntityController implements Constants {
      * @throws SQLException if a database error occurs.
      */
     public Project getProject(int projectId) throws SQLException {
-        ResultSet results = projectModel.selectProject(projectId);
+        ResultSet results = entityModel.selectProject(projectId);
         if (results == null) {
             return null;
         }
@@ -298,8 +255,8 @@ public class EntityController implements Constants {
                 .setErfNumber(results.getInt("erf_number"))
                 .setCost((double) results.getInt("amount_due"))
                 .setPaid(results.getInt("amount_paid"));
-        participantController = ParticipantController.getNewInstance();
-        participantController.setParticipants(projectModel.getParticipants(selectedProject.getNumber()));
+        participantController = ParticipantController.getInstance(entityModel);
+        participantController.setParticipants(entityModel.getParticipants(selectedProject.getNumber()));
         return selectedProject;
     }
 
@@ -308,21 +265,11 @@ public class EntityController implements Constants {
      * @throws SQLException if a database error occurs.
      */
     public boolean updateProgress() throws SQLException {
-        return projectModel.updateProgress(selectedProject.getNumber(), selectedProject.getDueDate(),
+        return entityModel.updateProgress(selectedProject.getNumber(), selectedProject.getDueDate(),
                 selectedProject.getDateFinalized());
     }
 
-    /**
-     * @return true if the update was successful, false if the update failed.
-     * @throws SQLException if a database error occurs.
-     */
-    public boolean updateContactDetails() throws SQLException {
-        Person selectedPerson = participantController.getSelectedParticipant();
-        int personId = selectedPerson.getNumber();
-        String phoneNumber = selectedPerson.getPhoneNumber(),
-                emailAddress = selectedPerson.getEmailAddress();
-        return projectModel.updateContactDetails(personId, phoneNumber, emailAddress);
-    }
+
 
     /**
      * @return true if the update was successful, false if the update failed
@@ -332,7 +279,15 @@ public class EntityController implements Constants {
         int projectId = selectedProject.getNumber(),
                 amountDue = (int) selectedProject.getCost() * 100,
                 amountPaid = (int) selectedProject.getPaid() * 100;
-        return projectModel.updateAccount(projectId, amountDue, amountPaid);
+        return entityModel.updateAccount(projectId, amountDue, amountPaid);
+    }
+
+    /**
+     * @return the last id inserted into the database.
+     * @throws SQLException if a database communication error occurs.
+     */
+    public int getLastInsertId() throws SQLException {
+        return entityModel.getLastInsertId();
     }
 
     /**
@@ -342,31 +297,34 @@ public class EntityController implements Constants {
      */
     public static EntityController getInstance(EntityModel model) throws SQLException {
         if (entityControllerInstance == null) {
-            projectModel = model;
-            ResultSet results;
-            do {
-                results = model.loadTypes();
-                if (results == null) {
-                    throw new SQLException();
-                }
-            } while (results == null);
-            buildingTypes = new ArrayList<>();
-            ArrayList<String> roleTypes = new ArrayList<>();
-            do {
-                String buildingType = results.getString("building_type");
-                String roleType = results.getString("relationship_type");
-                if (buildingType != null) {
-                    buildingTypes.add(buildingType);
-                }
-                if (roleType != null) {
-                    roleTypes.add(roleType);
-                }
-            } while (results.next());
-            ParticipantController.setRoleTypes(roleTypes);
-            projectModel = model;
+            entityModel = model;            
+            loadTypes();
+            entityModel = model;
             entityControllerInstance = new EntityController();
         }
         return entityControllerInstance;
+    }
+
+    /**
+     * Loads all building and relationship types to the application from their respective tables.
+     * 
+     * @throws SQLException if a database communication error occurs.
+     */
+    private static void loadTypes() throws SQLException{
+        ResultSet results = entityModel.loadTypes();
+        if (results == null) {
+            throw new SQLException(NO_TYPES);
+        }
+        do {
+            String buildingType = results.getString("building_type");
+            String roleType = results.getString("relationship_type");
+            if (buildingType != null) {
+                addBuildingType(buildingType);
+            }
+            if (roleType != null) {
+                ParticipantController.addRoleType(roleType);
+            }
+        } while (results.next());
     }
 
     private EntityController() {

@@ -103,6 +103,7 @@ public class OutputUtils implements Constants {
      * @param text the text to use as a warning.
      */
     public static void printWarning(String text) {
+        System.out.println();
         printLine();
         printCentered("***" + text + "***");
         printLine();

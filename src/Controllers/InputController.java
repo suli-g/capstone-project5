@@ -7,25 +7,23 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Stack;
 
 import Components.Input;
 
 import Components.Menu.Menu;
-import Entities.Entity;
+import Components.Menu.Menu.InvalidSelectionException;
 import Entities.EntityDecorator;
 import Entities.Person;
 import Entities.Project;
 import Interfaces.IMenu;
 import Interfaces.IQuery;
-import Utilities.EntityUtils;
 import Utilities.InputUtils;
 import Utilities.OutputUtils;
 
 /**
  * Controls responses by this application to user input.
  */
-public class ResponseController implements IQuery, IMenu {
+public class InputController implements IQuery, IMenu {
     /**
      * Stores all the allowed participant {@code role} types.
      */
@@ -46,21 +44,17 @@ public class ResponseController implements IQuery, IMenu {
      * @param roleTypes a list of role types to allow.
      */
     public static void setRoleTypes(ArrayList<String> roleTypes) {
-        ResponseController.roleTypes = roleTypes;
+        InputController.roleTypes = roleTypes;
     }
 
     /**
      * The controller used in this application to handle interactions.
      */
-    private static ResponseController controllerInstance;
+    private static InputController controllerInstance;
     /**
      * The controller used in this application to manage menus.
      */
     private static MenuController menuController;
-    /**
-     * The stack used in this application to control which menu to display.
-     */
-    private static Stack<Entity> entityStack;
     /**
      * The controller used in this application to manage menus.
      */
@@ -87,7 +81,7 @@ public class ResponseController implements IQuery, IMenu {
                 break;
             case "select":
                 String role = InputUtils.getString(parameter, "Project Role");
-                entityStack.push(participantController.selectParticipant(role));
+                entityController.pushToStack(participantController.selectParticipant(role));
                 menuController.addMenu(PERSON_MENU);
                 break;
         }
@@ -103,10 +97,10 @@ public class ResponseController implements IQuery, IMenu {
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand(),
                 parameter = currentMenu.getParameter(0);
-        Person selectedParticipant = entityController.getSelectedParticipant();
+        Person selectedParticipant = participantController.getSelectedParticipant();
         switch (command) {
             case "view":
-                EntityDecorator.printEntity(entityStack.peek());
+                System.out.println(EntityDecorator.decorate(entityController.peekInStack()));
                 break;
             case "email":
                 selectedParticipant.setPhoneNumber(InputUtils.getString(parameter, "Email Address"));
@@ -116,7 +110,7 @@ public class ResponseController implements IQuery, IMenu {
                 break;
         }
         try {
-            entityController.updateContactDetails();
+            participantController.updateContactDetails();
         } catch (SQLException error) {
             System.out.println("An error occurred while updating the database.");
             System.out.println(error);
@@ -128,18 +122,16 @@ public class ResponseController implements IQuery, IMenu {
      * exists, or returns
      * the current instance.
      * 
-     * @param _entityController      the application EntityManager.
-     * @param _menuController        the application MenuFactory.
-     * @param _participantController a stack of entities.
+     * @param _entityController the application EntityManager.
+     * @param _menuController   the application MenuFactory.
      * @return the single InteractionManager instance for this application.
      */
-    public static ResponseController getInstance(EntityController _entityController, MenuController _menuController,
-            ParticipantController _participantController) {
+    public static InputController getInstance(EntityController _entityController, MenuController _menuController) {
         if (controllerInstance == null) {
             menuController = _menuController;
             entityController = _entityController;
-            participantController = _participantController;
-            controllerInstance = new ResponseController();
+            participantController = entityController.getParticipantController();
+            controllerInstance = new InputController();
         }
         return controllerInstance;
     }
@@ -147,7 +139,7 @@ public class ResponseController implements IQuery, IMenu {
     /**
      * The class constructor.
      */
-    private ResponseController() {
+    private InputController() {
     }
 
     /**
@@ -157,7 +149,7 @@ public class ResponseController implements IQuery, IMenu {
      * @throws SQLException if an error occurs while writing to the database.
      */
     public void mainMenuInteraction()
-            throws IllegalArgumentException, IOException, SQLException {
+            throws IllegalArgumentException, IOException, SQLException, InvalidSelectionException {
         Integer projectId = null;
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand(),
@@ -198,7 +190,7 @@ public class ResponseController implements IQuery, IMenu {
                         } else {
                             currentProject.setDateFinalized(dateFinalized);
                         }
-                        EntityDecorator.printEntity(currentProject);
+                        System.out.println(EntityDecorator.decorate(currentProject));
                     } while (results.next());
                 }
                 break;
@@ -209,43 +201,42 @@ public class ResponseController implements IQuery, IMenu {
                     if (project == null) {
                         throw new IllegalStateException("The project could not be loaded.");
                     }
-                    entityStack.push(project);
+                    entityController.pushToStack(project);
+                    participantController = entityController.getParticipantController();
                     menuController.addMenu(PROJECT_MENU);
                 } catch (NumberFormatException error) {
                     OutputUtils.printWarning("The project number should be an integer.");
                 } catch (SQLException error) {
+                    error.printStackTrace();
                     OutputUtils.printWarning("Failed to load the requested project.");
                 } catch (IllegalStateException ex) {
                     System.out.println(ex.getLocalizedMessage());
                 }
                 break;
             case "create":
-                String phoneNumber = Input.expect("Customer phone number").toString(PHONE_NUMBER_REGEX);
+                String phoneNumber = Input.expect("Customer phone number")
+                        .toString(PHONE_NUMBER_REGEX, PHONE_NUMBER_LIMIT_EXPLANATION);
 
-                Person participant = entityController.findPerson(phoneNumber);
-                Person customer = EntityUtils.checkPersonDetails(entityController, "customer", participant);
+                Person customer = checkPersonDetails("customer", phoneNumber);
                 String projectName = Input.query("Project Name").toString();
                 int erfNumber = Input.expect("Project ERF Number").toInteger();
                 entityController.findAddress(erfNumber);
                 String projectType;
                 while (true) {
-                    try {
                         projectType = InputUtils.selectFromList(EntityController.getBuildingTypes());
                         break;
-                    } catch (Menu.InvalidSelectionException e) {
-                        System.out.println(e.getLocalizedMessage());
-                        continue;
-                    }
                 }
 
-                if (entityController.registerProject(
+                projectId = entityController.registerProject(
                         projectName,
                         projectType,
-                        erfNumber)) {
-                    entityController.registerParticipant("customer", customer.getNumber());
-                    OutputUtils.printCentered(String.format(INSERT_SUCCESS_MESSAGE, "Project"));
-                } else {
+                        erfNumber);
+                if (projectId == 0) {
                     OutputUtils.printCentered(String.format(INSERT_FAILURE_MESSAGE, "Project"));
+                } else {
+                    participantController.registerParticipant("customer", customer.getNumber(),
+                            projectId);
+                    OutputUtils.printCentered(String.format(INSERT_SUCCESS_MESSAGE, "Project"));
                 }
                 break;
         }
@@ -260,12 +251,11 @@ public class ResponseController implements IQuery, IMenu {
      */
     public void projectMenuInteraction()
             throws SQLException, IOException {
-        Stack<Entity> entityStack = entityController.getEntityStack();
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand();
         switch (command) {
             case "view":
-                EntityDecorator.printEntity(entityStack.peek());
+                System.out.println(EntityDecorator.decorate(entityController.peekInStack()));
                 break;
             case "account":
                 menuController.addMenu(ACCOUNT_MENU);
@@ -298,20 +288,20 @@ public class ResponseController implements IQuery, IMenu {
             throws IOException, SQLException {
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand();
+        String parameter = currentMenu.getParameter(1);
         Project selectedProject = entityController.getSelectedProject();
         switch (command) {
             case "cost":
-                selectedProject.setCost(InputUtils.getDouble("value", "Amount due"));
+                selectedProject.setCost(InputUtils.getDouble(parameter, "Amount due"));
                 break;
             case "paid":
-                selectedProject.setPaid(InputUtils.getDouble("value", "Amount paid"));
+                selectedProject.setPaid(InputUtils.getDouble(parameter, "Amount paid"));
                 break;
-
         }
-        if (
-            entityController.setSelectedProject(selectedProject).updateAccount()
-        ) {
-
+        if (!entityController.setSelectedProject(selectedProject).updateAccount()) {
+            throw new SQLException(UPDATE_FAILURE_MESSAGE);
+        } else {
+            OutputUtils.printCentered(UPDATE_SUCCESS_MESSAGE);
         }
     }
 
@@ -354,7 +344,64 @@ public class ResponseController implements IQuery, IMenu {
         while (true) {
             System.out.println("Select a role for which to fill in details:");
             String role = InputUtils.selectFromList(missingRoles);
-            EntityUtils.checkPersonDetails(entityController, role, null);
+            checkPersonDetails(role, null);
         }
+    }
+
+    /**
+     * Verifies that all details of a {@link Person} is already stored in the
+     * database and, if not, stores the person's details in the database.
+     * 
+     * @param role   the role {@code person} should be assigned to if not yet
+     *               assigned.
+     * @param phoneNumber the phone number of the person to be checked.
+     * @return {@code person} supplied to this function.
+     * @throws SQLException if a database access error occurs.
+     * @throws IOException  if an I/O error occurs.
+     */
+    public static Person checkPersonDetails(String role, String phoneNumber)
+            throws IOException, SQLException {
+        Person participant = participantController.findPerson(phoneNumber);
+        if (participant == null) {
+            OutputUtils.printCentered(new StringBuilder().append("Enter the required details for ")
+                    .append(role.toUpperCase()).append(": ").toString());
+            int erfNumber = Input.expect("Address ERF Number").toInteger();
+            verifyAddress(erfNumber);
+            participant = entityController.registerPerson(
+                    Input.expect("First name").toString(),
+                    Input.expect("Last name").toString(),
+                    Input.expect("Email address").toString(),
+                    phoneNumber,
+                    erfNumber);
+        }
+        participantController.assignPerson(role, participant);
+
+        return participant;
+    }
+
+    /**
+     * @param entityController the EntityController instance of this application.
+     * @param erfNumber        the ERF number of the address.
+     * @return true if the address exists; false if the address does not exit.
+     * @throws SQLException if a database access error occurs.
+     * @throws IOException  if an I/O error occurs.
+     */
+    private static boolean verifyAddress(int erfNumber)
+            throws SQLException, IOException {
+        String address = entityController.findAddress(erfNumber);
+        if (address != null) {
+            return true;
+        }
+        System.out.println("Address not found in database. Address Details: ");
+        int rowsAffected = entityController.registerAddress(erfNumber,
+                Input.expect("Street Address").toString(),
+                Input.expect("Suburb").toString(),
+                Input.expect("City").toString(),
+                Input.expect("Province").toString(),
+                Input.expect("Post code").toInteger());
+        if (rowsAffected == 0) {
+            throw new SQLException(ADDRESS_INSERT_FAILURE_MESSAGE);
+        }
+        return rowsAffected == 0;
     }
 }

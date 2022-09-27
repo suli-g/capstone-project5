@@ -1,4 +1,4 @@
-package Model.EntityModel;
+package Models.EntityModel;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,6 +8,20 @@ import Components.QueryBuilder;
 public abstract class EntityQuerier extends QueryModel {
     public EntityQuerier(QueryBuilder queryBuilder) {
         super(queryBuilder);
+    }
+
+    /**
+     * Retrieves the last inserted ID from the database.
+     * 
+     * @return the id of the last item insert into the database.
+     * @throws SQLException if a database access error occurs.
+     */
+    public Integer getLastInsertId() throws SQLException {
+        ResultSet results = queryBuilder.select("LAST_INSERT_ID() as last_insert_id").prepare().executeQuery();
+        if (results.next()) {
+            return results.getInt("last_insert_id");
+        }
+        return null;
     }
 
     /** 
@@ -25,8 +39,8 @@ public abstract class EntityQuerier extends QueryModel {
     }
 
     /** 
-     * @param projectId
-     * @return ResultSet
+     * @param projectId the id of the project being selected
+     * @return a {@link ResultSet} if the project exists;{@null} if the project does not exist.
      * @throws SQLException
      */
     public ResultSet selectProject(int projectId) throws SQLException {
@@ -42,7 +56,6 @@ public abstract class EntityQuerier extends QueryModel {
         return null;
     }
 
-    
     /** 
      * @param projectNumber
      * @return ResultSet
@@ -84,6 +97,7 @@ public abstract class EntityQuerier extends QueryModel {
     public ResultSet selectPerson(String phoneNumber) throws SQLException {
         PreparedStatement query = queryBuilder.select("people",
                 "person_id",
+                "erf_number",
                 "first_name",
                 "last_name",
                 "email_address",
@@ -107,6 +121,7 @@ public abstract class EntityQuerier extends QueryModel {
     public ResultSet selectPerson(int personId) throws SQLException {
         PreparedStatement query = queryBuilder.select("people",
                 "person_id",
+                "erf_number",
                 "first_name",
                 "last_name",
                 "email_address",

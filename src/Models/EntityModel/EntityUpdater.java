@@ -1,4 +1,4 @@
-package Model.EntityModel;
+package Models.EntityModel;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -21,17 +21,17 @@ public abstract class EntityUpdater extends EntityQuerier {
      * @return {@value 1} if the update is successful, {@value 0} if not successful.
      * @throws SQLException if the registration fails.
      */
-    public boolean registerPerson(String firstName, String lastName, String emailAddress, String phoneNumber, int erfNumber)
+    public PreparedStatement registerPerson(String firstName, String lastName, String emailAddress, String phoneNumber, int erfNumber)
             throws SQLException {
         PreparedStatement statement = queryBuilder.insertInto("person")
                 .group("first_name", "last_name", "phone_number", "email_address", "physical_address")
-                .values(5).prepare();
+                .values(5).prepare("person_id");
         statement.setString(1, firstName);
         statement.setString(2, lastName);
         statement.setString(3, phoneNumber);
         statement.setString(4, emailAddress);
         statement.setInt(5, erfNumber);
-        return statement.executeUpdate() == 1;
+        return statement;
     }
 
     /**
@@ -41,14 +41,14 @@ public abstract class EntityUpdater extends EntityQuerier {
      * @return {@value 1} if the update is successful, {@value 0} if not successful.
      * @throws SQLException if the registration fails.
      */
-    public boolean registerParticipant(int projectId, int personId, String role) throws SQLException {
+    public PreparedStatement registerParticipant(int projectId, int personId, String role) throws SQLException {
         PreparedStatement statement = queryBuilder.insertInto("participant")
                 .group("project_id", "person_id", "relationship")
-                .values(3).prepare();
+                .values(3).prepare("participant_id");
         statement.setInt(1, projectId);
         statement.setInt(2, personId);
         statement.setString(3, role);
-        return statement.executeUpdate() == 1;
+        return statement;
     }
 
     /**
@@ -58,7 +58,7 @@ public abstract class EntityUpdater extends EntityQuerier {
      * @return {@value 1} if the update is successful, {@value 0} if not successful.
      * @throws SQLException if the registration fails.
      */
-    public boolean registerProject(String projectName, String projectType, int erfNumber)
+    public PreparedStatement registerProject(String projectName, String projectType, int erfNumber)
             throws SQLException {
         String[] columns = new String[] { "project_type", "project_address", null };
         int values = 2;
@@ -68,14 +68,14 @@ public abstract class EntityUpdater extends EntityQuerier {
 
         PreparedStatement statement = queryBuilder
                 .insertInto("project")
-                .group(columns).values(values).prepare();
+                .group(columns).values(values).prepare("project_id");
 
         statement.setString(1, projectType);
         statement.setInt(2, erfNumber);
         if (columns[values - 1] != null) {
             statement.setString(values, projectName);
         }
-        return statement.executeUpdate() == 1;
+        return statement;
     }
 
     /**
@@ -88,19 +88,19 @@ public abstract class EntityUpdater extends EntityQuerier {
      * @return {@value 1} if the update is successful, {@value 0} if not successful.
      * @throws SQLException if the registration fails.
      */
-    public boolean registerAddress(int erfNumber, String streetAddress, String suburb, String city, String province,
+    public PreparedStatement registerAddress(int erfNumber, String streetAddress, String suburb, String city, String province,
             int postCode) throws SQLException {
         PreparedStatement statement = queryBuilder.insertInto("address")
                 .group("erf_number", "street_address", "suburb", "city",
                         "province", "post_code")
-                .values(6).prepare();
+                .values(6).prepare("address_id");
         statement.setInt(1, erfNumber);
         statement.setString(2, streetAddress);
         statement.setString(3, suburb);
         statement.setString(4, city);
         statement.setString(5, province);
         statement.setString(6, String.valueOf(postCode));
-        return statement.executeUpdate() == 1;
+        return statement;
     }
 
     /**

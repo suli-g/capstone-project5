@@ -93,6 +93,7 @@ INSERT INTO project(project_type, project_address)
         ORDER BY RAND()
     LIMIT 5;
 
+-- See procedures.sql for assign_project
 CALL assign_project(1,"2024-06-01",1, 3,1,2,3);
 CALL assign_project(2,"2024-06-01",2, 2, 1,NULL,NULL);
 CALL assign_project(3,"2024-06-01",3, 3, 1,2,NULL);

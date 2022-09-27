@@ -85,14 +85,15 @@ public class Input {
      * expression.
      * 
      * @param regex the regular expression to match the response to.
+     * @param explanation the explanation to use if the input does not match {@code regex}.
      * @return the response given to {@link #expect(String)} or
      *         {@link #query(String)}.
      * @throws IllegalStateException if {@code response} does not match
      *                               {@code regex}.
      */
-    public String toString(String regex) throws IllegalStateException {
+    public String toString(String regex, String explanation) throws IllegalStateException {
         if (!response.matches(regex)) {
-            throw new IllegalStateException(String.format("The response does not match the given format (%s).", regex));
+            throw new IllegalStateException(explanation);
         }
         return response;
     }

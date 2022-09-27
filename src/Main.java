@@ -1,4 +1,4 @@
-package main;
+
 
 import java.io.BufferedReader;
 /**
@@ -15,23 +15,20 @@ import Components.Input;
 import Components.Menu.Menu;
 import Controller.EntityController;
 import Controller.MenuController;
-import Controller.ResponseController;
-import Controller.ParticipantController;
-import Interfaces.Constants;
+import Controller.InputController;
 import Interfaces.IMenu;
-import Model.DatabaseConnection;
-import Model.EntityModel.EntityModel;
+import Models.DatabaseConnectionModel;
+import Models.EntityModel.EntityModel;
 import Utilities.OutputUtils;
 
 /**
  * Contains this application's main execution loop.
  */
-public class Main implements Constants, IMenu {
+public class Main implements IMenu {
     private static EntityController entityController;
     private static MenuController menuController;
-    private static ParticipantController participantController;
     private static Menu currentMenu;
-    private static ResponseController interactionManager;
+    private static InputController interactionManager;
 
     /**
      * @param mainArgs the arguments supplied by the main function.
@@ -46,10 +43,10 @@ public class Main implements Constants, IMenu {
                 configFileStream = new FileInputStream(mainArgs[0]);
             }
             entityController = EntityController.getInstance(
-                    EntityModel.getInstance(DatabaseConnection.loadFromFile(configFileStream)));
+                    EntityModel.getInstance(DatabaseConnectionModel.loadFromFile(configFileStream)));
             menuController = MenuController.getInstance();
             menuController.addMenu(MAIN_MENU);
-            interactionManager = ResponseController.getInstance(entityController, menuController, participantController);
+            interactionManager = InputController.getInstance(entityController, menuController);
         } catch (IOException ioError) {
             ioError.printStackTrace();
             System.out.println("An error occurred while reading from the db.properties file.");
@@ -61,7 +58,8 @@ public class Main implements Constants, IMenu {
             System.out.println("Run 'source setup.sql' from the mysql cli first.");
             System.exit(1);
         } catch (NullPointerException configMissing) {
-            OutputUtils.printWarning(configMissing.getLocalizedMessage());
+            configMissing.printStackTrace();
+            // System.out.println(configMissing.getLocalizedMessage());
             System.exit(1);
         }
     }
@@ -72,29 +70,28 @@ public class Main implements Constants, IMenu {
     public static void main(String[] args) {
         Input.getInstance(new BufferedReader(new InputStreamReader(System.in)));
         initializeEntityManager(args);
-
         OutputUtils.printDoubleLine();
         OutputUtils.printHeading(COMPANY_NAME);
         OutputUtils.printLine();
         OutputUtils.printCentered(APPLICATION_TYPE);
         while (!menuController.isDone()) {
-            currentMenu = menuController.showCurrent();
             try {
-                handleInteraction();
+                currentMenu = menuController.showCurrent();
+                if (currentMenu != null) {
+                    handleInteraction();
+                }
+            } catch (InterruptedException aborted) {
+                OutputUtils.printWarning(aborted.getLocalizedMessage());
+            } catch (IllegalStateException error) {
+                OutputUtils.printWarning(error.getLocalizedMessage());
             } catch (SQLException error) {
+                error.printStackTrace();
                 OutputUtils.printWarning("An error occurred while accessing the database.");
             } catch (IOException error) {
                 OutputUtils.printWarning("An error occurred while while reading from input.");
-            } catch (Menu.InvalidSelectionException error) {
-                OutputUtils.printWarning("The value entered is not on the menu.");
-            } 
-            catch (NumberFormatException error) {
+            } catch (NumberFormatException error) {
                 OutputUtils.printWarning("Please enter a number.");
-            }
-            catch (IllegalStateException error) {
-                OutputUtils.printWarning(error.getLocalizedMessage());
-            }
-            catch (IllegalArgumentException error) {
+            } catch (IllegalArgumentException error) {
                 OutputUtils.printWarning(error.getLocalizedMessage());
             }
         }
@@ -105,12 +102,18 @@ public class Main implements Constants, IMenu {
      * Handles all user interactions.
      * 
      * @throws SQLException if a database error occurs.
-     * @throws IOException if an I/O error occurs.
+     * @throws IOException  if an I/O error occurs.
      */
-    private static void handleInteraction() throws SQLException, IOException {
+    private static void handleInteraction() throws SQLException, IOException, InterruptedException {
         String command = currentMenu.getCommand();
+        if (command == null) {
+
+        }
         switch (command) {
             case MenuController.BACK_COMMAND:
+                if (entityController.getTotalEntitiesLoaded() >= menuController.getTotalMenusLoaded()) {
+                    entityController.popFromStack();
+                }
                 menuController.popTop();
                 return;
             case MenuController.QUIT_COMMAND:
@@ -137,6 +140,7 @@ public class Main implements Constants, IMenu {
                 } catch (DateTimeParseException err) {
                     System.out.println("The date entered was invalid.");
                 }
+                break;
             case PERSON_MENU_NAME:
                 interactionManager.personMenuInteraction();
                 break;

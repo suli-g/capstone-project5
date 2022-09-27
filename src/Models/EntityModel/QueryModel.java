@@ -1,4 +1,4 @@
-package Model.EntityModel;
+package Models.EntityModel;
 
 import Components.QueryBuilder;
 import Interfaces.IQuery;

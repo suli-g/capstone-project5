@@ -35,7 +35,10 @@ public class Menu extends LinkedHashMap<String, String> {
      * @return the first String in {@link #response}.
      */
     public String getCommand() {
-        return response[0];
+        if (response == null) {
+            return null;
+        }
+        return response[0].toLowerCase();
     }
 
     /**
@@ -50,7 +53,7 @@ public class Menu extends LinkedHashMap<String, String> {
         if (index >= response.length - 1) {
             return null;
         }
-        return response[index + 1];
+        return response[index + 1].toLowerCase();
     }
 
     /**

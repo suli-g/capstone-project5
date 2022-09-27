@@ -6,6 +6,7 @@ import java.util.Stack;
 import Components.Input;
 import Components.Menu.Menu;
 import Components.Menu.OptionDecorator;
+import Components.Menu.Menu.InvalidSelectionException;
 import Interfaces.IMenu;
 import Utilities.OutputUtils;
 
@@ -38,6 +39,13 @@ public class MenuController implements IMenu {
      * The menu stack.
      */
     private Stack<Menu> menuStack;
+
+    /**
+     * @return the total amount of {@link Menu} objects in the {@link #menuStack}.
+     */
+    public int getTotalMenusLoaded() {
+        return menuStack.size();
+    }
 
     /**
      * Adds a menu to {@link #menuStack}.
@@ -81,10 +89,12 @@ public class MenuController implements IMenu {
      * {@link Input#expect(String)} to get a
      * response from the user.
      * 
+     * @throws IOException if an I/O error occurs.
      * @throws IllegalStateException if no response is entered by the user.
-     * @return Menu
+     * @throws InterruptedException if the user forces the program to stop.
+     * @return the topmost menu in {@link #menuStack}.
      */
-    public Menu showCurrent() {
+    public Menu showCurrent() throws IOException, InvalidSelectionException, IllegalStateException, InterruptedException {
         Menu currentMenu = menuStack.peek();
         String name = currentMenu.getName();
         int titleLength = name.length() + 6;
@@ -97,15 +107,11 @@ public class MenuController implements IMenu {
         OutputUtils.printDoubleLine();
         System.out.println(menuOutline.toString());
         OutputUtils.printLine();
-        try {
-            currentMenu.setSelected(Input.expect(">").toString().split("\s"));
-        } catch (IOException io) {
-            io.printStackTrace();
-        } catch (NullPointerException err) {
-            System.out.println("Data entry was interrupted unexpectedly.");
-        } catch (Menu.InvalidSelectionException err) {
-            System.out.println(err.getLocalizedMessage());
+        String entry = Input.expect(">").toString();
+        if (entry == null) {
+            throw new InterruptedException(USER_FORCEFULLY_ABORTED_MESSAGE);
         }
+        currentMenu.setSelected(entry.split("\s"));
         return currentMenu;
     }
 
