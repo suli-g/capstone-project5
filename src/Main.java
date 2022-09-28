@@ -55,13 +55,12 @@ public class Main implements IMenu {
             interactionManager = InputController.getInstance(entityController, menuController);
         } catch (IOException ioError) {
             ioError.printStackTrace();
-            System.out.println("An error occurred while reading from the db.properties file.");
+            System.out.println(DB_CONFIG_ERROR_MESSAGE);
             System.out.println(ioError);
             System.exit(1);
         } catch (SQLException sqlError) {
             sqlError.printStackTrace();
-            System.out.println("The Database failed to load or has not been setup properly.");
-            System.out.println("Run 'source setup.sql' from the mysql cli first.");
+            System.out.println(DB_INIT_ERROR_MESSAGE);
             System.exit(1);
         } catch (NullPointerException configMissing) {
             configMissing.printStackTrace();
@@ -92,16 +91,16 @@ public class Main implements IMenu {
                 OutputUtils.printWarning(error.getLocalizedMessage());
             } catch (SQLException error) {
                 error.printStackTrace();
-                OutputUtils.printWarning("An error occurred while accessing the database.");
+                OutputUtils.printWarning(DB_ERROR_MESSAGE);
             } catch (IOException error) {
-                OutputUtils.printWarning("An error occurred while while reading from input.");
+                OutputUtils.printWarning(INPUT_ERROR_MESSAGE);
             } catch (NumberFormatException error) {
-                OutputUtils.printWarning("Please enter a number.");
+                OutputUtils.printWarning(NUMBER_EXPECTED_MESSAGE);
             } catch (IllegalArgumentException error) {
                 OutputUtils.printWarning(error.getLocalizedMessage());
             }
         }
-        System.out.println("Good bye!");
+        System.out.println(GOOD_BYE_MESSAGE);
     }
 
     /**
@@ -144,7 +143,7 @@ public class Main implements IMenu {
                 try {
                     interactionManager.progressMenuInteraction();
                 } catch (DateTimeParseException err) {
-                    System.out.println("The date entered was invalid.");
+                    System.out.println(INVALID_DATE_MESSAGE);
                 }
                 break;
             case PERSON_MENU_NAME:

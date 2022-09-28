@@ -5,14 +5,17 @@ package Tests;
  */
 import org.junit.Test;
 
-import IO.Input;
+import Components.Input;
 
 import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 import org.junit.After;
@@ -38,6 +41,7 @@ public class InputTest {
     private void provideInput(String data) {
         testIn = new ByteArrayInputStream(data.getBytes());
         System.setIn(testIn);
+        Input.getInstance(new BufferedReader(new InputStreamReader(System.in)));
     }
     
     
@@ -58,16 +62,20 @@ public class InputTest {
     public void testQuery() {
         String testInput = "Hello";
         provideInput(testInput);
-        Input.query("");
+        assertDoesNotThrow(() -> {
+            Input.query("");
+        });
 
-        assertEquals("(leave blank to skip): ", getOutput());
+        assertEquals("(optional): ", getOutput());
     }
 
     @Test
     public void testExpect() {
         String testInput = "Hello";
         provideInput(testInput);
-        Input.expect("");
+        assertDoesNotThrow(() -> {
+            Input.expect("");
+        });
 
         assertEquals(": ", getOutput());
     }
@@ -76,26 +84,29 @@ public class InputTest {
     public void testToInteger() {
         String testInput = "9";
         provideInput(testInput);
-        Input input = Input.expect("");
+        assertDoesNotThrow(() -> {
+            Input input = Input.expect("");
+            assertEquals(input.toInteger(), 9);
+        });
 
-        assertEquals(input.toInteger(), 9);
     }
 
     @Test
     public void testToDouble() {
         String testInput = "9.5";
         provideInput(testInput);
-        Input input = Input.expect("");
-
-        assertEquals(input.toDouble(), 9.5);
+        assertDoesNotThrow(() -> {
+            Input input = Input.expect("");
+            assertEquals(input.toDouble(), 9.5);           
+        });
     }
 
     @Test
     public void testIncorrectInput() {
         String testInput = "hello world";
         provideInput(testInput);
-        Input input = Input.expect("");
         assertThrows(NumberFormatException.class, () -> {
+            Input input = Input.expect("");
             input.toDouble();
             input.toInteger();
         });

@@ -10,6 +10,7 @@ import java.util.Stack;
 import Entities.Entity;
 import Entities.Person;
 import Entities.Project;
+import Factories.ProjectFactory;
 import Interfaces.IQuery;
 import Models.EntityModel.EntityModel;
 
@@ -235,6 +236,23 @@ public class EntityController implements IQuery {
     }
 
     /**
+     * @param projectName the project_name of the project in the database.
+     * @return the selected project if the project exists, null if the project does
+     *         not exist.
+     * @throws SQLException if a database error occurs.
+     */
+    public Project getProject(String projectName) throws SQLException {
+        ResultSet results = entityModel.selectProject(projectName);
+        if (results == null) {
+            return null;
+        }
+        selectedProject = ProjectFactory.fromResults(results);
+        participantController = ParticipantController.getInstance(entityModel);
+        participantController.setParticipants(entityModel.getParticipants(selectedProject.getNumber()));
+        return selectedProject;
+    }
+
+    /**
      * @param projectId the project_id of the project in the database.
      * @return the selected project if the project exists, null if the project does
      *         not exist.
@@ -245,16 +263,7 @@ public class EntityController implements IQuery {
         if (results == null) {
             return null;
         }
-        selectedProject = new Project(
-                results.getInt("project_id"),
-                results.getString("project_name"),
-                results.getString("project_address"),
-                results.getString("project_type"))
-                .setDueDate(results.getString("date_due"))
-                .setDateFinalized(results.getString("date_finalized"))
-                .setErfNumber(results.getInt("erf_number"))
-                .setCost((double) results.getInt("amount_due"))
-                .setPaid(results.getInt("amount_paid"));
+        selectedProject = ProjectFactory.fromResults(results);
         participantController = ParticipantController.getInstance(entityModel);
         participantController.setParticipants(entityModel.getParticipants(selectedProject.getNumber()));
         return selectedProject;

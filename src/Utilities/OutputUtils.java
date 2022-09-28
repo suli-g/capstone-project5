@@ -3,12 +3,12 @@ package Utilities;
 import java.util.ArrayList;
 import java.util.Map;
 
-import Interfaces.Constants;
+import Interfaces.Strings;
 
 /**
  * Handles application output.
  */
-public class OutputUtils implements Constants {
+public class OutputUtils implements Strings {
     /**
      * Prints each element from a list out on a new line.
      * 
@@ -62,7 +62,7 @@ public class OutputUtils implements Constants {
     }
 
     /**
-     * Prints the given {@code} divider to the terminal, using no more than {@value Constants#TERMINAL_WIDTH} lines.
+     * Prints the given {@code} divider to the terminal, using no more than {@value Strings#TERMINAL_WIDTH} lines.
      * 
      * @param divider the string to be used as a divider.
      */
@@ -85,7 +85,7 @@ public class OutputUtils implements Constants {
     }
 
     /**
-     * Aligns {@code text} in the center of the terminal window according to {@link Constants#TERMINAL_WIDTH}.
+     * Aligns {@code text} in the center of the terminal window according to {@link Strings#TERMINAL_WIDTH}.
      * 
      * @param text the text to center.
      * @return {@code text} with whitespace-padding on either side.

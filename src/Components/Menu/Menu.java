@@ -50,7 +50,7 @@ public class Menu extends LinkedHashMap<String, String> {
      * 
      */
     public String getParameter(int index) {
-        if (response.length <= index) {
+        if (response.length == 1) {
             return null;
         }
         return response[index + 1].toLowerCase();

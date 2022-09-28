@@ -38,10 +38,12 @@ public abstract class EntityQuerier extends QueryModel {
         return results;
     }
 
+
+
     /** 
      * @param projectId the id of the project being selected
      * @return a {@link ResultSet} if the project exists;{@null} if the project does not exist.
-     * @throws SQLException
+     * @throws SQLException if a database access error occurs.
      */
     public ResultSet selectProject(int projectId) throws SQLException {
         PreparedStatement query = queryBuilder
@@ -57,15 +59,33 @@ public abstract class EntityQuerier extends QueryModel {
     }
 
     /** 
-     * @param projectNumber
-     * @return ResultSet
-     * @throws SQLException
+     * @param projectId the id of the project being selected
+     * @return a {@link ResultSet} if the project exists;{@null} if the project does not exist.
+     * @throws SQLException if a database access error occurs.
      */
-    public ResultSet getParticipants(int projectNumber) throws SQLException {
+    public ResultSet selectProject(String projectName) throws SQLException {
+        PreparedStatement query = queryBuilder
+                .select("projects", "*")
+                .where("project_name")
+                .prepare();
+        query.setString(1, projectName);
+        ResultSet results = query.executeQuery();
+        if (results.next()) {
+            return results;
+        }
+        return null;
+    }
+
+    /** 
+     * @param projectId the id of the project in which the participants are involved.
+     * @return the ResultSet of participants if they exist; otherwise null.
+     * @throws SQLException if a database communication error occurs.
+     */
+    public ResultSet getParticipants(int projectId) throws SQLException {
         PreparedStatement selection = queryBuilder
                 .select("participants", "*")
                 .where("project_id").prepare();
-        selection.setInt(1, projectNumber);
+        selection.setInt(1, projectId);
         ResultSet results = selection.executeQuery();
         if (results.next()) {
             return results;

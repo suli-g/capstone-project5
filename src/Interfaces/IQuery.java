@@ -3,7 +3,7 @@ package Interfaces;
 /**
  * Contains strings used in this application for SQL queries.
  */
-public interface IQuery extends Constants {
+public interface IQuery extends Strings {
     /**
      * Used to verify that a string matches the phone_number column's
      * data type as recognized in the Database.
@@ -44,13 +44,13 @@ public interface IQuery extends Constants {
      */
     String INSERT_SUCCESS_MESSAGE = "THE RECORD HAS SUCCESSFULLY BEEN CREATED.";
     /**
-     * The Message to be displayed when a record has failed to be created.
+     * The Message to be displayed when a record has failed to be created as no new rows were created.
      */
-    String INSERT_FAILURE_MESSAGE = "Registration failed - no rows were affected.";
+    String INSERT_FAILURE_MESSAGE = "THE RECORD HAS FAILED TO BE CREATED - NO ROWS WERE AFFECTED.";
     /**
-     * The Message to be displayed when a record has failed to be created.
+     * The Message to be displayed when a record has failed to be created as a new key was not generated.
      */
-    String INSERT_FAILURE_MESSAGE_NO_ID = "Registration failed - no ID could be obtained.";
+    String INSERT_FAILURE_MESSAGE_NO_ID = "THE RECORD HAS FAILED TO BE CREATED - NO ID WAS OBTAINED.";
     /**
      * The Message to be displayed when a record has been updated.
      */

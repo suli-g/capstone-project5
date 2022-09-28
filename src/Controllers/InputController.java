@@ -51,7 +51,8 @@ public class InputController implements IQuery, IMenu {
         Integer projectId = null;
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand(),
-                parameter = currentMenu.getParameter(0);
+                parameter = currentMenu.getParameter(0),
+                projectName;
         participantController = entityController.getParticipantController();
         switch (command) {
             case "show":
@@ -95,11 +96,17 @@ public class InputController implements IQuery, IMenu {
                 break;
             case "select":
                 try {
-                    projectId = InputUtils.getInteger(parameter, "Project ID");
-                    Project project = entityController.getProject(projectId);
-                    if (project == null) {
-                        throw new IllegalStateException("The project could not be loaded.");
+                    Project project;
+                    if (parameter == null || !parameter.matches("^\\d+$")) {
+                        projectName = InputUtils.getString(parameter, "Project name");
+                        project  = entityController.getProject(projectName);
+                    } else {
+                        projectId = InputUtils.getInteger(parameter, "Project ID");
+                        project  = entityController.getProject(projectId);
                     }
+                    // if (project == null) {
+                    //     throw new IllegalStateException("The project could not be loaded.");
+                    // }
                     entityController.pushToStack(project);
                     participantController = entityController.getParticipantController();
                     menuController.addMenu(PROJECT_MENU);
@@ -117,7 +124,7 @@ public class InputController implements IQuery, IMenu {
                         .toString(PHONE_NUMBER_REGEX, PHONE_NUMBER_LIMIT_EXPLANATION);
 
                 Person customer = checkPersonDetails("customer", phoneNumber);
-                String projectName = Input.query("Project Name").toString();
+                projectName = Input.query("Project Name").toString();
                 int erfNumber = Input.expect("Project ERF Number").toInteger();
                 entityController.findAddress(erfNumber);
                 String projectType;

@@ -6,7 +6,7 @@ import Components.Menu.Menu;
  * Contains String constants to be used for the Menus in the application.
  * Can be modified for accessibility purposes (translation).
  */
-public interface IMenu extends Constants {
+public interface IMenu extends Strings {
     /**
      * The names the menus used in this application.
      */
