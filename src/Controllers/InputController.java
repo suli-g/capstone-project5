@@ -1,10 +1,9 @@
-package Controller;
+package Controllers;
 
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -25,29 +24,6 @@ import Utilities.OutputUtils;
  */
 public class InputController implements IQuery, IMenu {
     /**
-     * Stores all the allowed participant {@code role} types.
-     */
-    private static ArrayList<String> roleTypes;
-
-    /**
-     * Gets this InteractionContrller instance's {@link #roleTypes}.
-     * 
-     * @return the list of role types.
-     */
-    public static ArrayList<String> getRoleTypes() {
-        return roleTypes;
-    }
-
-    /**
-     * Define the list of allowed role types for this application.
-     * 
-     * @param roleTypes a list of role types to allow.
-     */
-    public static void setRoleTypes(ArrayList<String> roleTypes) {
-        InputController.roleTypes = roleTypes;
-    }
-
-    /**
      * The controller used in this application to handle interactions.
      */
     private static InputController controllerInstance;
@@ -62,85 +38,7 @@ public class InputController implements IQuery, IMenu {
     /**
      * The controller used in this application to manage project participants.
      */
-    private static ParticipantController participantController;
-
-    /**
-     * Provides the user with various options to interact with the participants of
-     * the selected project.
-     * 
-     * @throws IOException if an I/O error occurs.
-     */
-    public void participantMenuInteraction() throws IOException {
-        Menu currentMenu = menuController.getCurrent();
-        String command = currentMenu.getCommand(),
-                parameter = currentMenu.getParameter(0);
-        HashMap<String, Person> participants = participantController.getParticipants();
-        switch (command) {
-            case "list":
-                OutputUtils.printMap(participants);
-                break;
-            case "select":
-                String role = InputUtils.getString(parameter, "Project Role");
-                entityController.pushToStack(participantController.selectParticipant(role));
-                menuController.addMenu(PERSON_MENU);
-                break;
-        }
-    }
-
-    /**
-     * Provides the user with various options to interact with a Person.
-     * 
-     * @throws IOException  if an I/O error occurs.
-     * @throws SQLException if an error occurs while writing to the database.
-     */
-    public void personMenuInteraction() throws IOException, SQLException {
-        Menu currentMenu = menuController.getCurrent();
-        String command = currentMenu.getCommand(),
-                parameter = currentMenu.getParameter(0);
-        Person selectedParticipant = participantController.getSelectedParticipant();
-        switch (command) {
-            case "view":
-                System.out.println(EntityDecorator.decorate(entityController.peekInStack()));
-                break;
-            case "email":
-                selectedParticipant.setPhoneNumber(InputUtils.getString(parameter, "Email Address"));
-                break;
-            case "phone":
-                selectedParticipant.setPhoneNumber(InputUtils.getString(parameter, "Phone Number"));
-                break;
-        }
-        try {
-            participantController.updateContactDetails();
-        } catch (SQLException error) {
-            System.out.println("An error occurred while updating the database.");
-            System.out.println(error);
-        }
-    }
-
-    /**
-     * Creates a new InteractionManager instance for this application if no instance
-     * exists, or returns
-     * the current instance.
-     * 
-     * @param _entityController the application EntityManager.
-     * @param _menuController   the application MenuFactory.
-     * @return the single InteractionManager instance for this application.
-     */
-    public static InputController getInstance(EntityController _entityController, MenuController _menuController) {
-        if (controllerInstance == null) {
-            menuController = _menuController;
-            entityController = _entityController;
-            participantController = entityController.getParticipantController();
-            controllerInstance = new InputController();
-        }
-        return controllerInstance;
-    }
-
-    /**
-     * The class constructor.
-     */
-    private InputController() {
-    }
+    private ParticipantController participantController;
 
     /**
      * Provides the user with various options to interact with the application.
@@ -154,6 +52,7 @@ public class InputController implements IQuery, IMenu {
         Menu currentMenu = menuController.getCurrent();
         String command = currentMenu.getCommand(),
                 parameter = currentMenu.getParameter(0);
+        participantController = entityController.getParticipantController();
         switch (command) {
             case "show":
                 String projectView = PROJECTS_VIEW;
@@ -223,8 +122,8 @@ public class InputController implements IQuery, IMenu {
                 entityController.findAddress(erfNumber);
                 String projectType;
                 while (true) {
-                        projectType = InputUtils.selectFromList(EntityController.getBuildingTypes());
-                        break;
+                    projectType = InputUtils.selectFromList(EntityController.getBuildingTypes());
+                    break;
                 }
 
                 projectId = entityController.registerProject(
@@ -278,6 +177,59 @@ public class InputController implements IQuery, IMenu {
     }
 
     /**
+     * Provides the user with various options to interact with the participants of
+     * the selected project.
+     * 
+     * @throws IOException if an I/O error occurs.
+     */
+    public void participantMenuInteraction() throws IOException {
+        Menu currentMenu = menuController.getCurrent();
+        String command = currentMenu.getCommand(),
+                parameter = currentMenu.getParameter(0);
+        HashMap<String, Person> participants = participantController.getParticipants();
+        switch (command) {
+            case "list":
+                OutputUtils.printMap(participants);
+                break;
+            case "select":
+                String role = InputUtils.getString(parameter, "Project Role");
+                entityController.pushToStack(participantController.selectParticipant(role));
+                menuController.addMenu(PERSON_MENU);
+                break;
+        }
+    }
+
+    /**
+     * Provides the user with various options to interact with a Person.
+     * 
+     * @throws IOException  if an I/O error occurs.
+     * @throws SQLException if an error occurs while writing to the database.
+     */
+    public void personMenuInteraction() throws IOException, SQLException {
+        Menu currentMenu = menuController.getCurrent();
+        String command = currentMenu.getCommand(),
+                parameter = currentMenu.getParameter(0);
+        Person selectedParticipant = participantController.getSelectedParticipant();
+        switch (command) {
+            case "view":
+                System.out.println(EntityDecorator.decorate(entityController.peekInStack()));
+                break;
+            case "email":
+                selectedParticipant.setPhoneNumber(InputUtils.getString(parameter, "Email Address"));
+                break;
+            case "phone":
+                selectedParticipant.setPhoneNumber(InputUtils.getString(parameter, "Phone Number"));
+                break;
+        }
+        try {
+            participantController.updateContactDetails();
+        } catch (SQLException error) {
+            System.out.println("An error occurred while updating the database.");
+            System.out.println(error);
+        }
+    }
+
+    /**
      * Provides the user with options to update the account (cost, payment) details
      * of the selected project.
      * 
@@ -327,10 +279,20 @@ public class InputController implements IQuery, IMenu {
                 } while (true);
                 break;
             case "finalize":
-                selectedProject.markFinalized();
+                if (selectedProject.getCost() != selectedProject.getPaid()) {
+                    printInvoice();
+                } else {
+                    selectedProject.markFinalized();
+                }
                 break;
         }
         entityController.setSelectedProject(selectedProject).updateProgress();
+    }
+
+    private void printInvoice() {
+        OutputUtils.printCentered("INVOICE");
+        System.out.println(EntityDecorator.decorate(participantController.getParticipant("customer")));
+        System.out.println(EntityDecorator.decorate(entityController.getSelectedProject()));
     }
 
     /**
@@ -352,14 +314,14 @@ public class InputController implements IQuery, IMenu {
      * Verifies that all details of a {@link Person} is already stored in the
      * database and, if not, stores the person's details in the database.
      * 
-     * @param role   the role {@code person} should be assigned to if not yet
-     *               assigned.
+     * @param role        the role {@code person} should be assigned to if not yet
+     *                    assigned.
      * @param phoneNumber the phone number of the person to be checked.
      * @return {@code person} supplied to this function.
      * @throws SQLException if a database access error occurs.
      * @throws IOException  if an I/O error occurs.
      */
-    public static Person checkPersonDetails(String role, String phoneNumber)
+    private Person checkPersonDetails(String role, String phoneNumber)
             throws IOException, SQLException {
         Person participant = participantController.findPerson(phoneNumber);
         if (participant == null) {
@@ -404,4 +366,29 @@ public class InputController implements IQuery, IMenu {
         }
         return rowsAffected == 0;
     }
+
+    /**
+     * Creates a new InteractionManager instance for this application if no instance
+     * exists, or returns
+     * the current instance.
+     * 
+     * @param _entityController the application EntityManager.
+     * @param _menuController   the application MenuFactory.
+     * @return the single InteractionManager instance for this application.
+     */
+    public static InputController getInstance(EntityController _entityController, MenuController _menuController) {
+        if (controllerInstance == null) {
+            menuController = _menuController;
+            entityController = _entityController;
+            controllerInstance = new InputController();
+        }
+        return controllerInstance;
+    }
+
+    /**
+     * The class constructor.
+     */
+    private InputController() {
+    }
+
 }

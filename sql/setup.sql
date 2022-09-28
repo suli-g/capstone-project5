@@ -26,4 +26,5 @@ INSERT INTO relationship(relationship_type)
 (@architect_relationship),
 (@structural_engineer_relationship);
 
-source ./test_data.sql /** Remove line before deploying to production.
+/** Remove line below before deploying to production.*/
+source ./test_data.sql 

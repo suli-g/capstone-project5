@@ -9,7 +9,6 @@ import Interfaces.Constants;
  * Handles application output.
  */
 public class OutputUtils implements Constants {
-
     /**
      * Prints each element from a list out on a new line.
      * 

@@ -1,4 +1,10 @@
-
+/**
+ * To get started follow these steps:
+ * Open a terminal in the src/sql directory and enter the following:
+ * > mysql -u <username> -p 
+ * > (enter password here)
+ * > source sql/setup.sql
+ */
 
 import java.io.BufferedReader;
 /**
@@ -13,9 +19,9 @@ import java.time.format.DateTimeParseException;
 
 import Components.Input;
 import Components.Menu.Menu;
-import Controller.EntityController;
-import Controller.MenuController;
-import Controller.InputController;
+import Controllers.EntityController;
+import Controllers.InputController;
+import Controllers.MenuController;
 import Interfaces.IMenu;
 import Models.DatabaseConnectionModel;
 import Models.EntityModel.EntityModel;

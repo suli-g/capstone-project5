@@ -135,6 +135,7 @@ public class DatabaseConnectionModel implements DatabaseConnectionProperties {
      * Creates a {@link PreparedStatement} from the given {@code query}.
      * 
      * @param query a valid SQL statement.
+     * @param generatedKeys the keys generated for insert and update statements.
      * @return the created {@link PreparedStatement}.
      * @throws SQLException if a database access error occurs.
      */
