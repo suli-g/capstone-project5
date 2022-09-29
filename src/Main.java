@@ -116,6 +116,10 @@ public class Main implements IMenu {
         }
         switch (command) {
             case MenuController.BACK_COMMAND:
+            /**
+             * The program runs under the assumption that there will always be one more element in the MenuStack than there are in 
+             * the entityStack. If this is not the case, then first remove elements from the entity stack when the user enters {@value MenuController.BACK_COMMAND}
+             */
                 if (entityController.getTotalEntitiesLoaded() >= menuController.getTotalMenusLoaded()) {
                     entityController.popFromStack();
                 }

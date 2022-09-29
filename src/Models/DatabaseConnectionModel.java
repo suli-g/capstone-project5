@@ -15,7 +15,7 @@ interface DatabaseConnectionProperties {
     /**
      * The template used for the url to establish the Database connection.
      */
-    String URL_TEMPLATE = "jdbc:mysql://%s:%d/%s?useSSL=%s";
+    String URL_TEMPLATE = "jdbc:mysql://%s:%d/%s?allowPublicKeyRetrieval=%s&useSSL=%s";
     /**
      * The key containing the database's url.
      */
@@ -41,6 +41,10 @@ interface DatabaseConnectionProperties {
      * false}).
      */
     String DB_USE_SSL = "db.use-ssl";
+    /**
+     * The key indicating whether public key retrieval should be allowed.
+     */
+    String DB_ALLOW_PUBLIC_KEY = "db.allow-public-key";
 }
 
 /**
@@ -113,7 +117,7 @@ public class DatabaseConnectionModel implements DatabaseConnectionProperties {
                         "The database configuration file does not contain all of the required keys.");
             }
             int port = Integer.parseInt(portString);
-            String connectionUrl = String.format(URL_TEMPLATE, url, port, name, configuration.getProperty(DB_USE_SSL, "false"));
+            String connectionUrl = String.format(URL_TEMPLATE, url, port, name, configuration.getProperty(DB_ALLOW_PUBLIC_KEY, "true"), configuration.getProperty(DB_USE_SSL, "false"));
             instance = new DatabaseConnectionModel(
                     DriverManager.getConnection(connectionUrl, user, configuration.getProperty(DB_PASSWORD, "")));
         }

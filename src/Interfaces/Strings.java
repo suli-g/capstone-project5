@@ -63,4 +63,16 @@ public interface Strings {
      * The message to display when a date entered by the user is invalid.
      */
     String INVALID_DATE_MESSAGE = "The date entered was invalid.";
+    /**
+     * The message to display when a project number entered by the user cannot be parsed as an integer.
+     */
+    String PROJECT_NUMBER_INVALID_MESSAGE = "The project number should be an integer.";
+    /**
+     * The message to display when a project cannot be loaded
+     */
+    String PROJECT_FAILED_TO_LOAD = "Failed to load the requested project.";
+    /**
+     * The message to display when a project cannot be loaded
+     */
+    String INVALID_PROJECT_ID_MESSAGE = "The project ID entered is invalid. Enter ";
 }

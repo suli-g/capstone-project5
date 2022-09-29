@@ -101,20 +101,21 @@ public class InputController implements IQuery, IMenu {
                         projectName = InputUtils.getString(parameter, "Project name");
                         project  = entityController.getProject(projectName);
                     } else {
+                        OutputUtils.printWarning(INVALID_PROJECT_ID_MESSAGE);
                         projectId = InputUtils.getInteger(parameter, "Project ID");
                         project  = entityController.getProject(projectId);
                     }
-                    // if (project == null) {
-                    //     throw new IllegalStateException("The project could not be loaded.");
-                    // }
+                    if (project == null) {
+                        throw new IllegalStateException("The project could not be loaded.");
+                    }
                     entityController.pushToStack(project);
                     participantController = entityController.getParticipantController();
                     menuController.addMenu(PROJECT_MENU);
                 } catch (NumberFormatException error) {
-                    OutputUtils.printWarning("The project number should be an integer.");
+                    OutputUtils.printWarning(PROJECT_NUMBER_INVALID_MESSAGE);
                 } catch (SQLException error) {
                     error.printStackTrace();
-                    OutputUtils.printWarning("Failed to load the requested project.");
+                    OutputUtils.printWarning(PROJECT_FAILED_TO_LOAD);
                 } catch (IllegalStateException ex) {
                     System.out.println(ex.getLocalizedMessage());
                 }
