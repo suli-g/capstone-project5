@@ -1,3 +1,8 @@
+/**
+* This file contains information obtained at:
+* - https://dev.mysql.com/doc/refman/8.0/en/create-procedure.html
+* - https://www.w3schools.com/sql/sql_stored_procedures.asp
+*/
 DELIMITER $$
 /*
 ** This procedure checks the relationship table when a new participant is inserted and,

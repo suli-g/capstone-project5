@@ -1,6 +1,9 @@
 CREATE VIEW roles AS
 SELECT relationship_type
 from relationship;
+/*
+ Addresses
+ */
 CREATE VIEW addresses AS
 SELECT DISTINCT erf_number,
     CONCAT_WS(
@@ -12,10 +15,22 @@ SELECT DISTINCT erf_number,
         post_code
     ) AS full_address
 FROM address;
+/*
+ People
+ */
 CREATE VIEW people AS
-SELECT addresses.erf_number, person_id, first_name, last_name, phone_number, email_address, full_address AS physical_address
-    FROM person
+SELECT addresses.erf_number,
+    person_id,
+    first_name,
+    last_name,
+    phone_number,
+    email_address,
+    full_address AS physical_address
+FROM person
     LEFT JOIN addresses ON person.physical_address = erf_number;
+/*
+ Participants
+ */
 CREATE VIEW participants AS
 SELECT DISTINCT project_id,
     addresses.erf_number,
@@ -29,13 +44,18 @@ SELECT DISTINCT project_id,
 FROM relationship
     LEFT JOIN participant ON relationship_type = participant.relationship
     LEFT JOIN person ON person.person_id = participant.person_id
-    LEFT JOIN addresses ON person.physical_address = erf_number
-    ;
+    LEFT JOIN addresses ON person.physical_address = erf_number;
+/*
+ Contacts
+ */
 CREATE view contacts AS
 SELECT DISTINCT erf_number,
     phone_number
-    FROM address
+FROM address
     LEFT JOIN person ON physical_address = erf_number;
+/*
+ Projects
+ */
 CREATE VIEW projects AS
 SELECT DISTINCT project.project_id,
     project.project_name,
@@ -50,27 +70,39 @@ FROM project
     LEFT JOIN addresses ON project.project_address = addresses.erf_number
     LEFT JOIN account ON project.project_id = account.project
     LEFT JOIN progress ON progress.project = project.project_id;
-
+/*
+ Incomplete_Projects
+ */
 CREATE VIEW incomplete_projects AS
 SELECT DISTINCT *
 from projects
 WHERE date_finalized IS NULL;
+/*
+ Outstanding_Projects
+ */
 CREATE VIEW outstanding_projects AS
 SELECT DISTINCT *
 from incomplete_projects
 WHERE date_due < CURRENT_DATE()
     AND date_finalized IS NULL;
+/*
+ Finalized_Projects
+ */
 CREATE VIEW finalized_projects AS
 SELECT DISTINCT *
 FROM projects
 WHERE date_finalized IS NOT NULL;
+/*
+ Types_View
+ */
 CREATE VIEW types_view AS
-    SELECT building_type, relationship_type FROM building b
-            RIGHT JOIN relationship r 
-                ON b.t_id = r.t_id
-                    UNION
-    SELECT building_type, relationship_type FROM building b
-            LEFT JOIN relationship r 
-                ON r.t_id = b.t_id
-            ORDER BY -relationship_type DESC;
-    
+SELECT building_type,
+    relationship_type
+FROM building b
+    RIGHT JOIN relationship r ON b.t_id = r.t_id
+UNION
+SELECT building_type,
+    relationship_type
+FROM building b
+    LEFT JOIN relationship r ON r.t_id = b.t_id
+ORDER BY - relationship_type DESC;

@@ -1,3 +1,9 @@
+/*
+** This file uses information obtained at:
+** - https://www.mysqltutorial.org/mysql-triggers/mysql-after-insert-trigger
+** - https://phoenixnap.com/kb/mysql-trigger
+*/
+
 DELIMITER $$
 /*
 ** This trigger checks if the project_name field is blank of the project with project_id matching new.project_id

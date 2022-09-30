@@ -43,6 +43,9 @@ interface DatabaseConnectionProperties {
     String DB_USE_SSL = "db.use-ssl";
     /**
      * The key indicating whether public key retrieval should be allowed.
+     * Resolves: SQLNonTransientConnectionException: Public Key Retrieval is not allowed.
+     * 
+     * Retrieved at: https://stackoverflow.com/a/50438872/2850190
      */
     String DB_ALLOW_PUBLIC_KEY = "db.allow-public-key";
 }
