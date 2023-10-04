@@ -8,7 +8,7 @@ In your terminal, run:
 
 # Usage
 In your terminal, run 
-  `java ProjectApp.class`
+  `java Main.class`
 
 You will be asked to enter details for your Project, Customer, Contractor, and Architect.
 
